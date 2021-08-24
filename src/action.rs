@@ -185,3 +185,4 @@ impl Action for BaseAction {
         self.time_completed = Some(timestamp());
     }
 }
+

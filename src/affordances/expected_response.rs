@@ -1,16 +1,20 @@
-use serde::{Serialize, Deserialize};
+use super::json_object::JSonObject;
+use super::json_object::JSonSerializer;
 use std::string::String;
 ///Contains data of Expected response
 
-#[derive(Serialize,Debug)]
-#[serde(rename_all = "camelCase")] 
+#[derive(Debug,Clone)]
 pub struct ExpectedResponse {
     ///Expected response content type
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     content_type: String,
 }
-
+impl JSonObject for ExpectedResponse {
+    fn to_json(&self) ->  serde_json::Map<String, serde_json::Value> {
+        let mut m  = serde_json::Map::new();
+        self.content_type.copy("contentType".to_string(),&mut m);
+        m
+    }    
+}
 impl ExpectedResponse {
     ///Getresponse content type
     pub fn get_content_type(&self) -> String {
@@ -27,21 +31,4 @@ impl ExpectedResponse {
    }
 
 }
-/*
-impl Serialize for ExpectedResponse {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
-    {
-        // Any implementation of Serialize.
-    }
-}
-
-impl Deserialize for ExpectedResponse {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer
-    {
-        // Any implementation of Deserialize.
-    }
-}
-*/
 

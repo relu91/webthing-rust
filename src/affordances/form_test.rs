@@ -4,6 +4,7 @@
 #[cfg(test)]
 mod test {
     use super::super::form::Form;
+    use super::super::json_object::JSonObject;
     use super::super::form::FormOperationType;
      #[test]
      pub fn test_form() {
@@ -37,7 +38,7 @@ mod test {
         f.set_operation(FormOperationType::ReadProperty);
 
 
-        let ss  = serde_json::to_string(&f).unwrap();
+        let ss  = serde_json::json!(f.to_json()).to_string();
 
         println!("Output : {}",ss);
 

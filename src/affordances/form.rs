@@ -1,14 +1,15 @@
 
 use std::collections::BTreeSet;
 use enumset::EnumSet;
-use serde::{Serialize, Deserialize};
 
 use super::expected_response::{ExpectedResponse};
+use super::json_object::JSonObject;
+use super::json_object::JSonSerializer;
+
 use std::fmt;
 
 ///Enum for all avaiable form operation types
-#[derive(enumset::EnumSetType, Debug,Serialize,Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(enumset::EnumSetType, Debug)]
 pub enum FormOperationType {
     ///reads a property
     ReadProperty,
@@ -39,39 +40,40 @@ impl fmt::Display for FormOperationType  {
     }
 }
 ///Base form definition
-#[derive(Serialize,Debug)]
-#[serde(rename_all = "camelCase")] 
+#[derive(Debug)]
 pub struct Form {
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    #[serde(default)]
     security : BTreeSet<String>,
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    #[serde(default)]
     scopes : BTreeSet<String>,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     method_name : String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     subprotocol: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     content_type : String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     content_coding : String,
-    #[serde(skip_serializing_if = "EnumSet::is_empty", with = "oplist_serde")] 
-    #[serde(default)]   
     op : EnumSet<FormOperationType>,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(default)]
     href : String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
     response: Option<ExpectedResponse>,
 
 }
+impl JSonObject for Form {
+    fn to_json(&self) ->  serde_json::Map<String, serde_json::Value> {
+        let mut m = serde_json::Map::new();
+        
+        self.href.copy("href".to_string(),&mut m);
+        self.security.copy("security".to_string(),&mut m);
+        self.scopes.copy("scopes".to_string(),&mut m);
+        self.method_name.copy("methodName".to_string(),&mut m);
+        self.subprotocol.copy("subprotocol".to_string(),&mut m);
+        self.content_coding.copy("contentCoding".to_string(),&mut m);
+        self.content_type.copy("contentType".to_string(),&mut m);
+        self.op.copy("op".to_string(),&mut m);
+        if self.response.is_some() {
+            m.insert("response".to_string(), serde_json::Value::Object( self.response.clone().unwrap().to_json()));
+        }
 
+
+
+        m
+    }
+}
 impl Form {
     ///Main constructor
     pub fn new(h : String ) -> Self {

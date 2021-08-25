@@ -1,7 +1,8 @@
 
 
-
+///1
 pub trait JSonObject {
+    ///1
     fn to_json(&self) ->  serde_json::Map<String, serde_json::Value>;
 }
 
@@ -11,11 +12,33 @@ pub (crate) trait JSonSerializer {
 
 pub (crate) mod JSONSerialzerHelpers {
     use std::collections::btree_map::BTreeMap;
+    use std::collections::btree_set::BTreeSet;
     use super::super::w3c_list::W3CList;
     use super::super::descriptive_data::DescriptiveData;
     use super::super::data_schema::DataSchemaId;
     use super::super::data_schema::DataSchema;
+    use super::super::form::FormOperationType;
+    use enumset::EnumSet;
 
+    impl super::JSonSerializer for Option<f64> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_some() {
+                let s : f64  = self.unwrap();
+                tgt.insert(n, serde_json::json!(s));
+
+            }
+        }
+    }
+
+    impl super::JSonSerializer for Option<i32> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_some() {
+                let s : i32  = self.unwrap();
+                tgt.insert(n, serde_json::json!(s));
+
+            }
+        }
+    }
 
     impl super::JSonSerializer for Option<bool> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
@@ -30,10 +53,11 @@ pub (crate) mod JSONSerialzerHelpers {
     impl super::JSonSerializer for Option<String> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             if self.is_some() {
-                let s : String = self.unwrap();
-                tgt.insert(n, serde_json::Value::String(s));
+                let s  = self.as_ref().unwrap();
+                tgt.insert(n, serde_json::Value::String(s.to_string()));
 
             }
+            
         }
     }
 
@@ -46,6 +70,13 @@ pub (crate) mod JSONSerialzerHelpers {
                 }
 
                 tgt.insert(n, serde_json::Value::Object(m));
+            }
+        }
+    } 
+    impl super::JSonSerializer for BTreeSet<String> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_empty() == false {
+                tgt.insert(n,  serde_json::json!(self));
             }
         }
     } 
@@ -116,7 +147,7 @@ pub (crate) mod JSONSerialzerHelpers {
     impl super::JSonSerializer for Vec<Box<dyn DataSchema>>{
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             if self.is_empty() == false {
-                let v : Vec<serde_json::Map<String, serde_json::Value>> = Vec::new();
+                let mut v : Vec<serde_json::Map<String, serde_json::Value>> = Vec::new();
                 
                 for e in self {
                     let  m  = e.to_json();
@@ -126,6 +157,40 @@ pub (crate) mod JSONSerialzerHelpers {
 
                 tgt.insert(n,serde_json::json!(v));
 
+            }
+        }
+    }
+
+
+
+ 
+
+    impl super::JSonSerializer for EnumSet<FormOperationType> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_empty()  == false {
+                let mut v : Vec<String> = Vec::new();
+
+                for i in self.into_iter() {
+                    let s : String;
+                    match i {
+                        FormOperationType::ReadProperty => s = "readproperty".to_string(),
+                        FormOperationType::WriteProperty => s = "writeproperty".to_string(),
+                        FormOperationType::ObserveProperty => s = "observeproperty".to_string(),
+                        FormOperationType::UnobserveProperty => s =  "unobserveproperty".to_string(),
+                        FormOperationType::InvokeAction => s = "invokeaction".to_string(),
+                        FormOperationType::SubscribeEvent => s = "subscribeevent".to_string(),
+                        FormOperationType::UnsubscribeEvent => s = "unsubscribeevent".to_string(),
+                        FormOperationType::ReadAllProperties => s = "readallproperties".to_string(),
+                        FormOperationType::WriteAllProperties => s = "writeallproperties".to_string(),
+                        FormOperationType::ReadMultiPleproperties => s = "readmultipleproperties".to_string(),
+                        FormOperationType::WriteMultiPleproperties => s = "writemultipleproperties".to_string(),
+                    
+                    }
+                    
+                    v.push(s);
+                }
+
+                tgt.insert(n, serde_json::json!(v));
             }
         }
     }

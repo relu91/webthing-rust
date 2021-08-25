@@ -1,25 +1,31 @@
-
+use std::fmt::Debug;
 use super::form;
 use super::descriptive_data;
 use super::w3c_list::W3CList;
+use super::json_object::JSonObject;
+use super::json_object::JSonSerializer;
 
 
-use serde::{Serialize, Deserialize};
+
 
 ///1
-pub trait InteractionAffordance {
+pub trait InteractionAffordance :  Debug + JSonObject  {
     ///1
-    fn get_title(&self) -> String;
+    fn get_description(&self) -> Option<String>;
     ///1
-    fn set_title(&mut self, v : String);
+    fn set_description(&mut self, v : Option<String>);
     ///1
-    fn get_i18n_title(&self, k: String) -> String;
+    fn get_title(&self) -> Option<String>;
     ///1
-    fn set_i18n_title(&mut self, k : String , v: String);
+    fn set_title(&mut self, v : Option<String>);
     ///1
-    fn get_i18n_description(&self, k: String) -> String;
+    fn get_i18n_title(&self, k: String) -> Option<&String>;
     ///1
-    fn set_i18n_description(&mut self, k : String , v: String);
+    fn set_i18n_title(&mut self, k : String , v: Option<String>);
+    ///1
+    fn get_i18n_description(&self, k: String) -> Option<&String>;
+    ///1
+    fn set_i18n_description(&mut self, k : String , v: Option<String>);
     ///1 
     fn get_type(&self) -> &W3CList<String>;
     ///1
@@ -47,14 +53,9 @@ impl InteractionAffordanceFactory {
     }
 }
 
-
-#[derive(Serialize,Debug)]
-#[serde(rename_all = "camelCase")] 
-pub (crate) struct BaseInteractionAffordance {
-    #[serde(flatten)]
+#[derive(Debug)]
+struct BaseInteractionAffordance {
     desc_data : descriptive_data::DescriptiveData,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    #[serde(default)]
     forms   : Vec<form::Form>,
 }
 
@@ -68,47 +69,65 @@ impl BaseInteractionAffordance {
     }
     
 }
+impl JSonObject for BaseInteractionAffordance {
+    fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
+        let mut ret  = serde_json::Map::new();
+
+        self.desc_data.copy("".to_string(), &mut ret);
+
+        ret
+    }
+}
 impl InteractionAffordance for BaseInteractionAffordance {
     // from base Descriptive Data 
-    fn get_title(&self) -> std::string::String { 
+    ///1
+    fn get_description(&self) -> Option<String> {
+        self.desc_data.description.clone()
+    }
+    ///1
+    fn set_description(&mut self, v : Option<String>) {
+        self.desc_data.description = v.clone();
+    }
+
+    ///1
+    fn get_title(&self) -> Option<String> {
         self.desc_data.title.clone()
     }
-    fn set_title(&mut self, v : std::string::String) { 
+    ///1
+    fn set_title(&mut self, v : Option<String>) {
         self.desc_data.title = v.clone();
+    }
+    ///1
+    fn get_i18n_title(&self, k: String) -> Option<&String> {
+        self.desc_data.titles.get(&k)
+    }
+    ///1
+    fn set_i18n_title(&mut self, k : String , v: Option<String>) {
+        match v {
+            None => self.desc_data.titles.remove(&k),
+            Some(x) => self.desc_data.titles.insert(k,x)
+        };
+        
+    }
+    ///1
+    fn get_i18n_description(&self, k: String) -> Option<&String> {
+        self.desc_data.descriptions.get(&k)
+    }
+    ///1
+    fn set_i18n_description(&mut self, k : String , v: Option<String>) {
+        match v {
+            None => self.desc_data.descriptions.remove(&k),
+            Some(x) => self.desc_data.descriptions.insert(k,x)
+        };
 
     }
-    fn get_i18n_title(&self, k :  std::string::String) -> std::string::String { 
-        if self.desc_data.titles.contains_key(&k) {
-            let z  =  self.desc_data.titles.get(&k);
-            if z.is_some() {
-                return z.unwrap().clone();
-            }
-        } 
-
-        "".to_string()
-    }
-    fn set_i18n_title(&mut self, k :  std::string::String, v :  std::string::String) { 
-        self.desc_data.titles.insert(k,v);
-    }
-    fn get_i18n_description(&self, k :  std::string::String) -> std::string::String { 
-        if self.desc_data.descriptions.contains_key(&k) {
-            let z  =  self.desc_data.descriptions.get(&k);
-            if z.is_some() {
-                return z.unwrap().clone();
-            }
-        } 
-
-        "".to_string()
-    }
-    fn set_i18n_description(&mut self, k :  std::string::String, v :  std::string::String) { 
-        self.desc_data.descriptions.insert(k,v);
-    }
-    fn get_type(&self) -> &W3CList<String> { 
+    ///1 
+    fn get_type(&self) -> &W3CList<String> {
         &self.desc_data.stype
     }
-    fn set_type(&mut self, v : &W3CList<String>) { 
+    ///1
+    fn set_type(&mut self, v : &W3CList<String>) {
         self.desc_data.stype = v.clone();
-
     }
 
     // specific interaction affordance data

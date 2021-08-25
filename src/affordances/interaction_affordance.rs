@@ -4,6 +4,9 @@ use super::descriptive_data;
 use super::w3c_list::W3CList;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
+use super::data_schema::DataSchemaFactory;
+use super::data_schema::DataSchema;
+use std::collections::btree_map::BTreeMap;
 
 
 
@@ -41,6 +44,17 @@ pub trait InteractionAffordance :  Debug + JSonObject  {
     fn clear_forms(&mut self);
 
 
+    ///1 
+    fn add_uri_variable(&mut self, n : String, d : Box<dyn DataSchema> );
+    ///1 
+    fn remove_uri_variable(&mut self, n : String);
+    ///1 
+    fn get_uri_variables(&self) -> &BTreeMap<String, Box<dyn DataSchema> >;
+    ///1
+    fn clear_uri_variables(&mut self);
+
+
+
 }
 ///1
 pub struct InteractionAffordanceFactory {
@@ -48,7 +62,7 @@ pub struct InteractionAffordanceFactory {
 ///1
 impl InteractionAffordanceFactory {
     ///1
-    pub fn make() -> Box<dyn InteractionAffordance> {
+    pub fn new() -> Box<dyn InteractionAffordance> {
         return Box::new(BaseInteractionAffordance::new());
     }
 }
@@ -57,13 +71,15 @@ impl InteractionAffordanceFactory {
 struct BaseInteractionAffordance {
     desc_data : descriptive_data::DescriptiveData,
     forms   : Vec<form::Form>,
+    uri_variables : BTreeMap<String, Box<dyn DataSchema> >,
 }
 
 impl BaseInteractionAffordance {
     fn new() -> Self {
         Self {
             desc_data : descriptive_data::DescriptiveData::new(),
-            forms : Vec::new()
+            forms : Vec::new(),
+            uri_variables : BTreeMap::new()
         }    
     
     }
@@ -74,6 +90,11 @@ impl JSonObject for BaseInteractionAffordance {
         let mut ret  = serde_json::Map::new();
 
         self.desc_data.copy("".to_string(), &mut ret);
+        self.forms.copy("forms".to_string(),&mut ret);
+
+        
+        self.uri_variables.copy("uriVariables".to_string(),&mut ret);
+        
 
         ret
     }
@@ -145,6 +166,22 @@ impl InteractionAffordance for BaseInteractionAffordance {
 
     fn clear_forms(&mut self) {
         self.forms.clear();
+    }
+    ///1 
+    fn add_uri_variable(&mut self, n : String, d : Box<dyn DataSchema> ) {
+        self.uri_variables.insert(n,d);
+    }
+    ///1 
+    fn remove_uri_variable(&mut self, n : String) {
+        self.uri_variables.remove(&n);
+    }
+    ///1 
+    fn get_uri_variables(&self) -> &BTreeMap<String, Box<dyn DataSchema> > {
+        &self.uri_variables
+    }
+    ///1
+    fn clear_uri_variables(&mut self) {
+        self.uri_variables.clear();
     }
 
 }

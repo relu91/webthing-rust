@@ -80,7 +80,7 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     } 
-
+/*
     impl super::JSonSerializer for Vec<String > {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             if self.is_empty() == false {
@@ -88,7 +88,7 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     } 
-
+*/
     impl super::JSonSerializer for String {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             if self.is_empty() == false {
@@ -130,13 +130,13 @@ pub (crate) mod JSONSerialzerHelpers {
                 let s  : String;
 
                 match v {
-                    DSIObject => s = "object".to_string(),
-                    DSIArray => s = "array".to_string(),
-                    DSIString => s = "string".to_string(),
-                    DSINumber => s = "number".to_string(),
-                    DSIInteger => s = "integer".to_string(),
-                    DSIBoolean => s = "boolean".to_string(),
-                    DSINull => s = "null".to_string(),
+                    DataSchemaId::DSIObject => s = "object".to_string(),
+                    DataSchemaId::DSIArray => s = "array".to_string(),
+                    DataSchemaId::DSIString => s = "string".to_string(),
+                    DataSchemaId::DSINumber => s = "number".to_string(),
+                    DataSchemaId::DSIInteger => s = "integer".to_string(),
+                    DataSchemaId::DSIBoolean => s = "boolean".to_string(),
+                    DataSchemaId::DSINull => s = "null".to_string(),
                 }
 
                 tgt.insert(n, serde_json::Value::String(s));
@@ -192,6 +192,65 @@ pub (crate) mod JSONSerialzerHelpers {
 
                 tgt.insert(n, serde_json::json!(v));
             }
+        }
+    }
+
+
+    impl<T> super::JSonSerializer for Vec<T> where T: super::JSonObject {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_empty() == false {
+                let mut v : Vec<serde_json::Map<String, serde_json::Value>> =  Vec::new();
+                for i in self {
+                    let m = i.to_json();
+                    v.push(m);
+
+                }
+
+                tgt.insert(n, serde_json::json!(v));
+            }
+        }
+    }
+    impl super::JSonSerializer for Vec<Box<dyn super::JSonObject>>{
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_empty() == false {
+                let mut v : Vec<serde_json::Map<String, serde_json::Value>> = Vec::new();
+                
+                for e in self {
+                    let  m  = e.to_json();
+                    v.push(m);
+    
+                }
+
+                tgt.insert(n,serde_json::json!(v));
+
+            }
+        }
+    }
+
+    impl super::JSonSerializer for BTreeMap<String, Box<dyn DataSchema >>  {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_empty() == false {
+                let mut z : serde_json::Map<String, serde_json::Value> =   serde_json::Map::new();
+                for (key, value) in self.into_iter() {
+                    let m = value.to_json();
+                    z.insert(key.clone(),serde_json::Value::Object(m));
+                }
+
+                tgt.insert(n, serde_json::json!(z));
+            }
+        }
+    }
+
+    impl super::JSonSerializer for Option<Box<dyn DataSchema >>  {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            match &*self {
+                None => { return; }
+                Some(x) => { 
+                    let m = x.to_json();
+                    tgt.insert(n, serde_json::json!(m));
+                }
+            }
+
         }
     }
 

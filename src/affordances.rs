@@ -17,7 +17,12 @@ mod w3c_list;
 pub mod data_schema;
 ///Module for base json
 pub mod json_object;
+///Module for actions affordances
+pub mod action_affordance;
+///Module for actions affordances
+pub mod event_affordance;
 
+////1
 pub use expected_response::ExpectedResponse;
 
 /*

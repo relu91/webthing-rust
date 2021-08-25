@@ -80,7 +80,7 @@ pub trait DataSchema : Debug + JSonObject  {
 }
 
 
-/*
+
 ///1
 pub trait ArrayDataSchema : DataSchema {
     ///1
@@ -144,7 +144,8 @@ pub trait ObjectDataSchema : DataSchema {
     fn clear_required(&mut self);
     
 }
-*/
+
+
 impl JSonObject for BaseDataSchema {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
         let mut ret  = serde_json::Map::new();

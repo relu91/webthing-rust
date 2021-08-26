@@ -36,7 +36,7 @@ impl JSonObject for BaseEventAffordance {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
         let mut m  = self.base.to_json();
         self.subscription.copy("subscription".to_string(),&mut m);
-        self.subscription.copy("data".to_string(),&mut m);
+        self.data.copy("data".to_string(),&mut m);
         self.cancellation.copy("cancellation".to_string(),&mut m);
         m
     }

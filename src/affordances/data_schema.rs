@@ -64,7 +64,7 @@ pub trait DataSchema : Debug + JSonObject  {
     ///1
     fn get_oneof_list(&self) -> &Vec<Box<dyn DataSchema>>;
     ///1
-    fn remove_oneof(&self, i : i32);
+    fn remove_oneof(&mut self, i : i32);
     ///1
     fn get_format(&self) -> Option<String>;
     ///1
@@ -234,7 +234,7 @@ impl DataSchema for BaseDataSchema {
         &self.one_of
     }
     ///1
-    fn remove_oneof(&self, i : i32) {
+    fn remove_oneof(&mut self, i : i32) {
 
     }
     ///1
@@ -396,7 +396,7 @@ impl DataSchema for BaseIntegerDataSchema {
         &self.base.one_of
     }
     ///1
-    fn remove_oneof(&self, i : i32) {
+    fn remove_oneof(&mut self, i : i32) {
 
     }
     ///1
@@ -547,7 +547,7 @@ impl DataSchema for BaseNumberDataSchema {
         &self.base.one_of
     }
     ///1
-    fn remove_oneof(&self, i : i32) {
+    fn remove_oneof(&mut self, i : i32) {
 
     }
     ///1

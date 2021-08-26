@@ -1,6 +1,8 @@
 use super::interaction_affordance::InteractionAffordance;
 use super::interaction_affordance::InteractionAffordanceFactory;
+use super::data_schema::DataSchemaFactory;
 use super::data_schema::DataSchema;
+use super::data_schema::DataSchemaId;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
 use super::w3c_list::W3CList;
@@ -12,7 +14,13 @@ pub trait PropertyAffordance : InteractionAffordance + DataSchema {
     ///1
     fn get_observable(&self) -> Option<bool>;
     ///1
-    fn set_observable(&mut self, v :  Option<bool>>);
+    fn set_observable(&mut self, v :  Option<bool>);
+
+    ///1 
+    fn set_data_schema(&mut self, v: Box<dyn DataSchema>);
+
+    ///1
+    fn set_interaction(&mut self, v: Box<dyn InteractionAffordance>);
     
 }
 
@@ -25,81 +33,90 @@ struct BasePropertyAffordance {
 
 impl JSonObject for BasePropertyAffordance {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut m  = self.baseInteraction.to_json();
-        self.observable.copy("observable".to_string(),m);
-        
-        self.subscription.copy("subscription".to_string(),&mut m);
-        self.subscription.copy("data".to_string(),&mut m);
-        self.cancellation.copy("cancellation".to_string(),&mut m);
+        let mut m  = self.base_interaction.to_json();
+        self.observable.copy("observable".to_string(),&mut m);
+        //now, copy from base data schema everything except descriptive data
+        let m2 = self.base_dataschema.to_json();
+
+        for (key, value) in m2 {
+            match key.as_ref() {
+                "title"  => (),
+                "titles" => (),
+                "description" => (),
+                "descriptions" => (),
+                "@type" => (),
+                _ =>  { m.insert(key,value); },
+            }
+        }
         m
     }
 }
 
-impl InteractionAffordance for BaseEventAffordance {
+impl InteractionAffordance for BasePropertyAffordance {
     fn get_description(&self) -> Option<String> {
-        self.base.get_description()
+        self.base_interaction.get_description()
     }
     ///1
     fn set_description(&mut self, v : Option<String>) {
-        self.base.set_description(v);
+        self.base_interaction.set_description(v);
     }
 
     ///1
     fn get_title(&self) -> Option<String> {
-        self.base.get_title()
+        self.base_interaction.get_title()
     }
     ///1
     fn set_title(&mut self, v : Option<String>) {
-        self.base.set_title(v)
+        self.base_interaction.set_title(v)
     }
     ///1
     fn get_i18n_title(&self, k: String) -> Option<&String> {
-        self.base.get_i18n_title(k)
+        self.base_interaction.get_i18n_title(k)
     }
     ///1
     fn set_i18n_title(&mut self, k : String , v: Option<String>) {
-        self.base.set_i18n_title(k,v);
+        self.base_interaction.set_i18n_title(k,v);
     }
     ///1
     fn get_i18n_description(&self, k: String) -> Option<&String> {
-        self.base.get_i18n_description(k)
+        self.base_interaction.get_i18n_description(k)
     }
     ///1
     fn set_i18n_description(&mut self, k : String , v: Option<String>) {
-        self.base.set_i18n_description(k,v);
+        self.base_interaction.set_i18n_description(k,v);
     }
     ///1 
     fn get_type(&self) -> &W3CList<String> {
-        self.base.get_type()
+        self.base_interaction.get_type()
     }
     ///1
     fn set_type(&mut self, v : &W3CList<String>) {
-        self.base.set_type(v);
+        self.base_interaction.set_type(v);
     }
 
     // specific interaction affordance data
     fn add_form(&mut self, f : form::Form) { 
-        self.base.add_form(f);
+        self.base_interaction.add_form(f);
     }
 
 
     fn remove_form(&mut self, f : form::Form) { 
-        self.base.remove_form(f);
+        self.base_interaction.remove_form(f);
     }
     fn get_forms(&self) -> &std::vec::Vec<form::Form> { 
-        self.base.get_forms()
+        self.base_interaction.get_forms()
     }
 
     fn clear_forms(&mut self) {
-        self.base.clear_forms();
+        self.base_interaction.clear_forms();
     }
     ///1 
     fn add_uri_variable(&mut self, n : String, d : Box<dyn DataSchema> ) {
-        self.base.add_uri_variable(n,d);
+        self.base_interaction.add_uri_variable(n,d);
     }
     ///1 
     fn remove_uri_variable(&mut self, n : String) {
-        self.base.remove_uri_variable(n);
+        self.base_interaction.remove_uri_variable(n);
     }
     ///1 
     fn get_uri_variables(&self) -> &BTreeMap<String, Box<dyn DataSchema> > {
@@ -112,49 +129,132 @@ impl InteractionAffordance for BaseEventAffordance {
 
 }
 
-impl EventAffordance for BaseEventAffordance {
-    ///1
-    fn get_subscription(&self) -> &Option<Box<dyn DataSchema>> {
-        &self.subscription
+
+impl DataSchema for BasePropertyAffordance {
+    fn get_description(&self) -> Option<String> {
+        self.base_dataschema.get_description()
     }
     ///1
-    fn set_subscription(&mut self, v : Option<Box<dyn DataSchema>>) {
-        self.subscription = v;
+    fn set_description(&mut self, v : Option<String>) {
+        self.base_dataschema.set_description(v);
+    }
+
+    ///1
+    fn get_title(&self) -> Option<String> {
+        self.base_dataschema.get_title()
     }
     ///1
-    fn get_data(&self) -> &Option<Box<dyn DataSchema>> {
-        &self.data
+    fn set_title(&mut self, v : Option<String>) {
+        self.base_dataschema.set_title(v);
     }
     ///1
-    fn set_data(&mut self, v :Option<Box<dyn DataSchema>>) {
-        self.data = v;
+    fn get_i18n_title(&self, k: String) -> Option<&String> {
+        self.base_dataschema.get_i18n_title(k)
     }
     ///1
-    fn get_cancellation(&self) -> &Option<Box<dyn DataSchema>> {
-        &self.cancellation
+    fn set_i18n_title(&mut self, k : String , v: Option<String>) {
+        self.base_dataschema.set_i18n_title(k,v);
+        
     }
     ///1
-    fn set_cancellation(&mut self, v :  Option<Box<dyn DataSchema>>) {
-        self.cancellation = v;
+    fn get_i18n_description(&self, k: String) -> Option<&String> {
+        self.base_dataschema.get_i18n_description(k)
+    }
+    ///1
+    fn set_i18n_description(&mut self, k : String , v: Option<String>) {
+        self.base_dataschema.set_i18n_description(k,v);
+    }
+    ///1 
+    fn get_type(&self) -> &W3CList<String> {
+        self.base_dataschema.get_type()
+    }
+    ///1
+    fn set_type(&mut self, v : &W3CList<String>) {
+        self.base_dataschema.set_type(v);
+    }
+    ///1
+    fn get_schema_type(&self) -> Option<DataSchemaId> {
+        self.base_dataschema.get_schema_type()
+    }
+    ///1
+    fn get_unit(&self) -> Option<String> {
+        self.base_dataschema.get_unit()
+    }
+    ///1
+    fn set_unit(&mut self , v : Option<String>) {
+        self.base_dataschema.set_unit(v);
+    }
+    ///1
+    fn add_oneof(&mut self, v: Box<dyn DataSchema>) {
+        self.base_dataschema.add_oneof(v);
+    }
+    ///1
+    fn get_oneof_list(&self) -> &Vec<Box<dyn DataSchema>> {
+        self.base_dataschema.get_oneof_list()
+    }
+    ///1
+    fn remove_oneof(&mut self, i : i32) {
+        self.base_dataschema.remove_oneof(i);
+    }
+    ///1
+    fn get_format(&self) -> Option<String> {
+        self.base_dataschema.get_format()
+    }
+    ///1
+    fn set_format(&mut self , v : Option<String>) {
+        self.base_dataschema.set_format(v);
+    }
+    ///1
+    fn get_readonly(&self) -> Option<bool> {
+        self.base_dataschema.get_readonly()
+    }
+    ///1
+    fn set_readonly(&mut self, v : Option<bool>) {
+        self.base_dataschema.set_readonly(v);
+    }
+    ///1
+    fn get_writeonly(&self) ->Option< bool> {
+        self.base_dataschema.get_writeonly()
+    }
+    ///1
+    fn set_writeonly(&mut self, v : Option<bool>) {
+        self.base_dataschema.set_writeonly(v);
+    }
+
+}
+impl PropertyAffordance for BasePropertyAffordance {
+    ///1
+    fn get_observable(&self) -> Option<bool> {
+        self.observable
+    }
+    ///1
+    fn set_observable(&mut self, v :  Option<bool>) {
+        self.observable = v.clone();
+    }
+
+    fn set_data_schema(&mut self, v: Box<dyn DataSchema>) {
+        self.base_dataschema = v;
+    }
+    fn set_interaction(&mut self, v: Box<dyn InteractionAffordance>) {
+        self.base_interaction = v;
     }
 
 }
 
 
 ///1
-pub struct EventAffordanceFactory {
+pub struct PropertyAffordanceFactory {
 
 }
 
 ///1
-impl  EventAffordanceFactory {
+impl  PropertyAffordanceFactory {
     ///1
-    pub fn new() ->  Box<dyn EventAffordance>  {
-        let b = BaseEventAffordance { 
-            base : InteractionAffordanceFactory::new(),
-            subscription : None,
-            data : None,
-            cancellation : None
+    pub fn new() ->  Box<dyn PropertyAffordance>  {
+        let b = BasePropertyAffordance { 
+            base_interaction : InteractionAffordanceFactory::new(),
+            base_dataschema : DataSchemaFactory::new(None),
+            observable : None
         };
         
 

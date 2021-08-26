@@ -21,6 +21,10 @@ pub mod json_object;
 pub mod action_affordance;
 ///Module for actions affordances
 pub mod event_affordance;
+///Module for properties affordances
+pub mod property_affordance;
+///Module for security scheme
+pub mod security_scheme;
 
 ////1
 pub use expected_response::ExpectedResponse;

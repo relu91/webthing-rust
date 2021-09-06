@@ -18,7 +18,12 @@ pub (crate) mod JSONSerialzerHelpers {
     use super::super::data_schema::DataSchemaId;
     use super::super::data_schema::DataSchema;
     use super::super::form::FormOperationType;
+    use super::super::security_scheme::SecuritySchemeId ;
+    use super::super::security_scheme::SecuritySchemeInLocation  ;
+    use super::super::security_scheme::SecuritySchemeDigestQOP;
     use enumset::EnumSet;
+    use url::Url;
+
 
     impl super::JSonSerializer for Option<f64> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
@@ -35,6 +40,17 @@ pub (crate) mod JSONSerialzerHelpers {
             if self.is_some() {
                 let s : i32  = self.unwrap();
                 tgt.insert(n, serde_json::json!(s));
+
+            }
+        }
+    }
+
+    impl super::JSonSerializer for Option<Url>  {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_some() {
+                let u : &Url  = self.as_ref().unwrap();
+                let s  = u.as_str();
+                tgt.insert(n,serde_json::Value::String(s.to_string()));
 
             }
         }
@@ -251,6 +267,49 @@ pub (crate) mod JSONSerialzerHelpers {
                 }
             }
 
+        }
+    }
+
+    impl super::JSonSerializer for SecuritySchemeId {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            let s : String;
+            match self {
+                SecuritySchemeId::Nosec => s = "nosec".to_string(),
+                SecuritySchemeId::Basic => s = "basic".to_string(),
+                SecuritySchemeId::Digest => s = "digest".to_string(),
+                SecuritySchemeId::Bearer => s = "bearer".to_string(),
+                SecuritySchemeId::PSK => s = "psk".to_string(),
+                SecuritySchemeId::OAuth2 => s = "oauth2".to_string(),
+                SecuritySchemeId::ApiKey => s = "apikey".to_string(),
+            
+            }
+
+            tgt.insert(n,serde_json::Value::String(s));
+        }
+    }
+    impl super::JSonSerializer for SecuritySchemeInLocation  {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            let s : String;
+            match self {
+                SecuritySchemeInLocation::Header => s = "header".to_string(),
+                SecuritySchemeInLocation::Query => s = "query".to_string(),
+                SecuritySchemeInLocation::Body => s = "body".to_string(),
+                SecuritySchemeInLocation::Cookie => s = "cookie".to_string(),
+            
+            }
+
+            tgt.insert(n,serde_json::Value::String(s));
+        }
+    }
+    impl super::JSonSerializer for SecuritySchemeDigestQOP{
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            let s : String;
+            match self  {
+                SecuritySchemeDigestQOP::Auth => s = "auth".to_string(),
+                SecuritySchemeDigestQOP::AuthInt => s = "auth-int".to_string(),
+
+            }
+            tgt.insert(n,serde_json::Value::String(s));
         }
     }
 

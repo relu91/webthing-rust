@@ -44,13 +44,21 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     }
+    impl super::JSonSerializer for Url  {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            let s  = self.as_str();
+            tgt.insert(n,serde_json::Value::String(s.to_string()));
+
+        }
+    }
 
     impl super::JSonSerializer for Option<Url>  {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             if self.is_some() {
                 let u : &Url  = self.as_ref().unwrap();
-                let s  = u.as_str();
-                tgt.insert(n,serde_json::Value::String(s.to_string()));
+                u.copy(n,tgt);
+//                let s  = u.as_str();
+//                tgt.insert(n,serde_json::Value::String(s.to_string()));
 
             }
         }

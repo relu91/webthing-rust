@@ -1,4 +1,4 @@
-use super::super::w3c_list::W3CList;
+use super::w3c_list::W3CList;
 use url::Url;
 ///1
 pub trait Thing {

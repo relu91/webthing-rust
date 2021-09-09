@@ -1,7 +1,7 @@
 use super::super::w3c_list::W3CList;
 use url::Url;
 ///1
-pub traits Thing {
+pub trait Thing {
     ///1
     fn get_context(&self) -> &W3CList<Url>;
     ///1
@@ -17,7 +17,7 @@ pub traits Thing {
     ///1
     fn set_type(&mut self, v: &String);
     ///2
-    fn set_type_list(&mut self, v : &W3CList<String>):
+    fn set_type_list(&mut self, v : &W3CList<String>);
     ///1
     fn add_type(&mut self, v : &String);
     ///1

@@ -25,7 +25,12 @@ pub mod event_affordance;
 pub mod property_affordance;
 ///Module for security scheme
 pub mod security_scheme;
-
+///1
+pub mod version_info;
+///1
+pub mod link;
+///1
+pub mod thing;
 ////1
 pub use expected_response::ExpectedResponse;
 

@@ -14,13 +14,13 @@ use std::collections::btree_map::BTreeMap;
 ///1
 pub trait InteractionAffordance :  Debug + JSonObject  {
     ///1
-    fn get_description(&self) -> Option<String>;
+    fn get_description(&self) -> &Option<String>;
     ///1
-    fn set_description(&mut self, v : Option<String>);
+    fn set_description(&mut self, v : &Option<String>);
     ///1
-    fn get_title(&self) -> Option<String>;
+    fn get_title(&self) -> &Option<String>;
     ///1
-    fn set_title(&mut self, v : Option<String>);
+    fn set_title(&mut self, v : &Option<String>);
     ///1
     fn get_i18n_title(&self, k: String) -> Option<&String>;
     ///1
@@ -102,20 +102,20 @@ impl JSonObject for BaseInteractionAffordance {
 impl InteractionAffordance for BaseInteractionAffordance {
     // from base Descriptive Data 
     ///1
-    fn get_description(&self) -> Option<String> {
-        self.desc_data.description.clone()
+    fn get_description(&self) -> &Option<String> {
+        &self.desc_data.description
     }
     ///1
-    fn set_description(&mut self, v : Option<String>) {
+    fn set_description(&mut self, v : &Option<String>) {
         self.desc_data.description = v.clone();
     }
 
     ///1
-    fn get_title(&self) -> Option<String> {
-        self.desc_data.title.clone()
+    fn get_title(&self) -> &Option<String> {
+        &self.desc_data.title
     }
     ///1
-    fn set_title(&mut self, v : Option<String>) {
+    fn set_title(&mut self, v : &Option<String>) {
         self.desc_data.title = v.clone();
     }
     ///1

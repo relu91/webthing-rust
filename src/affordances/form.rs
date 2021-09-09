@@ -202,38 +202,5 @@ impl Form {
 
 }
 
-mod oplist_serde {
-    pub fn serialize<S>(op: &enumset::EnumSet<super::FormOperationType>, s: S) -> Result<S::Ok, S::Error>
-    where S: serde::Serializer {
-        match op.len() {
-            0 => {
-                 return s.serialize_none();
-            }
-            1=> { 
-                //return op.iter().next().unwrap().clone().serialize(s);
-                let f : super::FormOperationType = op.iter().next().unwrap().clone();
-                let x : String  = f.to_string();
-                return s.serialize_str(&x.to_lowercase());
-            }
-            _ => {
-                return s.serialize_none();
-            }
-        }
-  
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D)
-        -> Result<enumset::EnumSet<super::FormOperationType>, D::Error>
-        where D: serde::Deserializer<'de> {
-        //let s: Option<String> = Option::deserialize(deserializer)?;
-/*        
-        if let Some(s) = s {
-            return Ok(Some(NaiveDate::parse_from_str(&s, "%Y-%m-%d").map_err(serde::de::Error::custom)?))
-        }
-*/
-        Ok(enumset::EnumSet::new())
-    }    
-}
-
 
 

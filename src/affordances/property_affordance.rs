@@ -53,20 +53,20 @@ impl JSonObject for BasePropertyAffordance {
 }
 
 impl InteractionAffordance for BasePropertyAffordance {
-    fn get_description(&self) -> Option<String> {
+    fn get_description(&self) -> &Option<String> {
         self.base_interaction.get_description()
     }
     ///1
-    fn set_description(&mut self, v : Option<String>) {
+    fn set_description(&mut self, v : &Option<String>) {
         self.base_interaction.set_description(v);
     }
 
     ///1
-    fn get_title(&self) -> Option<String> {
+    fn get_title(&self) -> &Option<String> {
         self.base_interaction.get_title()
     }
     ///1
-    fn set_title(&mut self, v : Option<String>) {
+    fn set_title(&mut self, v : &Option<String>) {
         self.base_interaction.set_title(v)
     }
     ///1

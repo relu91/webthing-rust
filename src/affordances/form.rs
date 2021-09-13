@@ -1,6 +1,11 @@
 
 use std::collections::BTreeSet;
+use std::cmp::Ord;
+use std::cmp::PartialOrd;
+use std::cmp::PartialEq;
+use std::cmp::Ordering;
 use enumset::EnumSet;
+use url::Url;
 
 use super::expected_response::{ExpectedResponse};
 use super::json_object::JSonObject;
@@ -42,17 +47,43 @@ impl fmt::Display for FormOperationType  {
 ///Base form definition
 #[derive(Debug)]
 pub struct Form {
-    security : BTreeSet<String>,
-    scopes : BTreeSet<String>,
-    method_name : String,
-    subprotocol: String,
-    content_type : String,
-    content_coding : String,
-    op : EnumSet<FormOperationType>,
-    href : String,
-    response: Option<ExpectedResponse>,
+    pub security : BTreeSet<String>,
+    pub scopes : BTreeSet<String>,
+    pub method_name : String,
+    pub subprotocol: String,
+    pub content_type : String,
+    pub content_coding : String,
+    pub op : EnumSet<FormOperationType>,
+    pub href : Url,
+    pub response: Option<ExpectedResponse>,
 
 }
+impl PartialEq for Form {
+    fn eq(&self, other: &Self) -> bool {
+        let s1  = self.href;
+        let s2 = other.href;
+        s1 == s2
+    }
+}
+impl PartialOrd for Form {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let s1  = self.href;
+        let s2 = other.href;
+        Some(s1.cmp(&s2))
+
+    }
+}
+
+impl Eq for Form {}
+
+impl Ord for Form {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let s1  = self.href;
+        let s2 = other.href;
+        s1.cmp(&s2)
+    }
+}
+
 impl JSonObject for Form {
     fn to_json(&self) ->  serde_json::Map<String, serde_json::Value> {
         let mut m = serde_json::Map::new();
@@ -76,9 +107,9 @@ impl JSonObject for Form {
 }
 impl Form {
     ///Main constructor
-    pub fn new(h : String ) -> Self {
+    pub fn new(h : &Url) -> Self {
         Self {
-            href : h,
+            href : h.clone(),
             security : BTreeSet::new(),
             scopes :  BTreeSet::new(),
             op : EnumSet::new(),
@@ -89,6 +120,7 @@ impl Form {
             response : None
         }
     }
+/*    
     ///Gets list of allowd operations 
     pub fn get_operation_list(&self) -> EnumSet<FormOperationType> {
         return self.op;
@@ -192,14 +224,14 @@ impl Form {
     }
 
     ///Gets href
-    pub fn get_href(&self) -> String {
+    pub fn get_href(&self) -> &Url{
         return self.href.clone();
     }
     ///Sets href
     pub fn set_href(&mut self, h : String) {
         self.href = h;
     }
-
+*/
 }
 
 

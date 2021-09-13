@@ -2,41 +2,52 @@ use url::Url;
 use std::fmt::Debug;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
+use std::cmp::Ord;
+use std::cmp::PartialOrd;
+use std::cmp::PartialEq;
+use std::cmp::Ordering;
 
-///1
-pub trait Link: Debug + JSonObject {
-    ///1
-    fn get_href(&self) -> &Url;
-    ///1
-    fn set_href(&mut self, v : &Url);
 
-    ///1
-    fn get_type(&self) -> &Option<String>;
-    ///1
-    fn set_type(&mut self, v: &Option<String>);
-
-    ///1
-    fn get_rel(&self) -> &Option<String>;
-    ///1
-    fn set_rel(&mut self, v: &Option<String>);
-
-    ///1
-    fn get_anchor(&self) -> &Option<Url>;
-    ///1
-    fn set_anchor(&mut self, v : &Option<Url>);
-
-}
 
 
 #[derive(Debug,Clone)]
-struct BaseLink {
-    href    : Url,
-    stype   : Option<String>,
-    rel     : Option<String>,
-    anchor  : Option<Url>
+pub struct Link {
+    pub href    : Url,
+    pub stype   : Option<String>,
+    pub rel     : Option<String>,
+    pub anchor  : Option<Url>
 }
 
-impl JSonObject for BaseLink {
+impl Ord for Link {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let s1  = self.href;
+        let s2 = other.href;
+        s1.cmp(&s2)
+    }
+
+}
+impl PartialOrd for Link {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let s1  = self.href;
+        let s2 = other.href;
+        Some(s1.cmp(&s2))
+
+    }
+
+}
+impl PartialEq for Link {
+    fn eq(&self, other: &Self) -> bool {
+        let s1  = self.href;
+        let s2 = other.href;
+        s1 == s2
+    }
+
+}
+impl Eq for Link {
+
+}
+
+impl JSonObject for Link {
     
     fn to_json(&self) -> serde_json::Map<std::string::String, serde_json::Value> { 
         let mut ret = serde_json::Map::new();
@@ -49,38 +60,10 @@ impl JSonObject for BaseLink {
     }
 }
 
-impl Link for BaseLink {
-    fn get_href(&self) -> &Url {
-        &self.href
-    }
-    fn set_href(&mut self, v : &Url) {
-        self.href = v.clone();
-    }
 
-    fn get_type(&self) -> &Option<String> {
-        &self.stype
-    }
-    fn set_type(&mut self, v: &Option<String>) {
-        self.stype = v.clone();
-    }
 
-    fn get_rel(&self) -> &Option<String> {
-        &self.rel
-    }
-    fn set_rel(&mut self, v: &Option<String>) {
-        self.rel = v.clone();
-    }
 
-    fn get_anchor(&self) -> &Option<Url> {
-        &self.anchor
-    }
-    fn set_anchor(&mut self, v : &Option<Url>) {
-        self.anchor = v.clone();
-    }
-
-}
-
-impl BaseLink {
+impl Link {
     pub fn new(h : &Url) -> Self {
         Self {
             href : h.clone(),
@@ -91,16 +74,3 @@ impl BaseLink {
     }
 }
 
-///1
-pub struct LinkFactory {
-
-}
-
-impl LinkFactory {
-    ///1
-    pub fn new(h : &Url ) -> Box<dyn Link> {
-        Box::new(
-            BaseLink::new(h)
-        )
-    }
-}

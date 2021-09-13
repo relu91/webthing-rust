@@ -158,7 +158,7 @@ impl InteractionAffordance for BaseInteractionAffordance {
 
 
     fn remove_form(&mut self, f : form::Form) { 
-        self.forms.retain(|x| *x.get_href() != f.get_href());
+        self.forms.retain(|x| x.href != f.href);
     }
     fn get_forms(&self) -> &std::vec::Vec<form::Form> { 
         return &self.forms;

@@ -6,7 +6,9 @@ mod test {
     use super::super::form::Form;
     use super::super::json_object::JSonObject;
     use super::super::form::FormOperationType;
+/*    
      #[test]
+     
      pub fn test_form() {
         let href = "http://1.2.3.4" ;
         let content_type = "application/json";
@@ -43,5 +45,5 @@ mod test {
         println!("Output : {}",ss);
 
     }
-
+*/
 }

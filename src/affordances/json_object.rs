@@ -21,9 +21,13 @@ pub (crate) mod JSONSerialzerHelpers {
     use super::super::security_scheme::SecuritySchemeId ;
     use super::super::security_scheme::SecuritySchemeInLocation  ;
     use super::super::security_scheme::SecuritySchemeDigestQOP;
+    use chrono::DateTime;
+    use chrono::Utc;
+
     use enumset::EnumSet;
     use url::Url;
 
+    
 
     impl super::JSonSerializer for Option<f64> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
@@ -120,6 +124,21 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     }
+    impl super::JSonSerializer for W3CList<Url> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            match self {
+                W3CList::List(ref list) => {
+                    tgt.insert(n, serde_json::json!(list));
+                }
+                W3CList::Single(ref single) => {
+                    tgt.insert(n, serde_json::Value::String(single.to_string()));
+                }
+                W3CList::None => (),
+            }
+    
+        }
+    }
+
 
     impl super::JSonSerializer for W3CList<String> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
@@ -321,4 +340,15 @@ pub (crate) mod JSONSerialzerHelpers {
         }
     }
 
+    
+    impl super::JSonSerializer for Option<DateTime<Utc>> {
+        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
+            if self.is_some() {
+                let v  = self.unwrap();
+                let s  = v.to_string();
+                tgt.insert(n,serde_json::Value::String(s));
+            }
+    
+        }
+    }
 }

@@ -16,7 +16,7 @@ use std::fmt::Debug;
 
 
 ///1
-pub trait Thing : Debug + JSonObject{
+pub trait ThingDescription : Debug + JSonObject{
     ///1
     fn get_context(&self) -> &W3CList<Url>;
     ///1
@@ -169,7 +169,7 @@ pub trait Thing : Debug + JSonObject{
 
 
 #[derive(Debug)]
-struct BaseThing {
+struct BaseThingDescription {
     ctx     : W3CList<Url>,
     types   : W3CList<String>,
     id      : Option<Url>,
@@ -189,9 +189,9 @@ struct BaseThing {
     sec_defs: BTreeMap<String, Box<dyn SecurityScheme>>
 }
 
-impl BaseThing {
+impl BaseThingDescription {
     pub fn new( u : &Url) -> Self {
-        BaseThing {
+        BaseThingDescription {
             ctx : W3CList::Single(u.clone()),
             types : W3CList::None, 
             id : None,
@@ -217,7 +217,7 @@ impl BaseThing {
 
 ///1
 /// 
-impl JSonObject for BaseThing {
+impl JSonObject for BaseThingDescription {
 
     fn to_json(&self) -> serde_json::Map<std::string::String, serde_json::Value> { 
         let mut ret = serde_json::Map::new();
@@ -238,7 +238,7 @@ impl JSonObject for BaseThing {
     }
 }
 
-impl Thing for BaseThing {
+impl ThingDescription for BaseThingDescription {
     ///1
     fn get_context(&self) -> &W3CList<Url> {
         &self.ctx
@@ -530,13 +530,13 @@ impl Thing for BaseThing {
     }
     
 }
-pub struct ThingFactory {
+pub struct ThingDescriptionFactory {
 
 }
 
-impl ThingFactory {
+impl ThingDescriptionFactory {
     ///1
-    pub fn new(ctx : &Url ) -> Box<dyn Thing> {
-        Box::new(BaseThing::new(ctx))
+    pub fn new(ctx : &Url ) -> Box<dyn ThingDescription> {
+        Box::new(BaseThingDescription::new(ctx))
     }
 }

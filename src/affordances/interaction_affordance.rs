@@ -4,15 +4,14 @@ use super::descriptive_data;
 use super::w3c_list::W3CList;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
-use super::data_schema::DataSchemaFactory;
 use super::data_schema::DataSchema;
 use std::collections::btree_map::BTreeMap;
-
+use std::marker::{Send,Sync};
 
 
 
 ///1
-pub trait InteractionAffordance :  Debug + JSonObject  {
+pub trait InteractionAffordance :  Debug + JSonObject  + Sync + Send{
     ///1
     fn get_description(&self) -> &Option<String>;
     ///1

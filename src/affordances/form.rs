@@ -120,7 +120,7 @@ impl Form {
             response : None
         }
     }
-/*    
+
     ///Gets list of allowd operations 
     pub fn get_operation_list(&self) -> EnumSet<FormOperationType> {
         return self.op;
@@ -225,13 +225,13 @@ impl Form {
 
     ///Gets href
     pub fn get_href(&self) -> &Url{
-        return self.href.clone();
+        &self.href
     }
     ///Sets href
-    pub fn set_href(&mut self, h : String) {
-        self.href = h;
+    pub fn set_href(&mut self, h : &Url) {
+        self.href = h.clone();
     }
-*/
+
 }
 
 

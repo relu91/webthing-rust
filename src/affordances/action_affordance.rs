@@ -6,9 +6,8 @@ use super::json_object::JSonSerializer;
 use super::w3c_list::W3CList;
 use super::form;
 use std::collections::btree_map::BTreeMap;
-
 ///1
-pub trait ActionAffordance : InteractionAffordance {
+pub trait ActionAffordance : InteractionAffordance  {
     ///1
     fn get_input(&self) -> &Option<Box<dyn DataSchema>>;
     ///1

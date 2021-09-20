@@ -30,7 +30,7 @@ pub mod version_info;
 ///1
 pub mod link;
 ///1
-pub mod thing;
+pub mod thing_description;
 ////1
 pub use expected_response::ExpectedResponse;
 

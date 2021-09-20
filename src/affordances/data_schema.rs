@@ -5,7 +5,7 @@ use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
 use super::w3c_list::W3CList;
 use std::collections::btree_map::BTreeMap;
-
+use std::marker::{Sync,Send};
 
 
 
@@ -32,7 +32,7 @@ pub enum DataSchemaId {
 
 
 ///1
-pub trait DataSchema : Debug + JSonObject  {
+pub trait DataSchema : Debug + JSonObject + Sync + Send {
     ///1
     fn get_description(&self) -> Option<String>;
     ///1

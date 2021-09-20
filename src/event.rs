@@ -1,28 +1,10 @@
 use serde_json;
-use serde_json::json;
 use std::marker::{Send, Sync};
-
+use super::affordances::event_affordance::EventAffordance;
 use super::utils::timestamp;
 
 /// High-level Event trait.
 pub trait Event: Send + Sync {
-    /// Get the event description.
-    ///
-    /// Returns a JSON map describing the event.
-    fn as_event_description(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut description = serde_json::Map::new();
-        let mut inner = serde_json::Map::new();
-        inner.insert("timestamp".to_string(), json!(self.get_time()));
-
-        let data = self.get_data();
-        if data.is_some() {
-            inner.insert("data".to_string(), json!(data));
-        }
-
-        description.insert(self.get_name(), json!(inner));
-        description
-    }
-
     /// Get the event's name.
     fn get_name(&self) -> String;
 
@@ -31,6 +13,8 @@ pub trait Event: Send + Sync {
 
     /// Get the event's timestamp.
     fn get_time(&self) -> String;
+
+    fn get_affordance(&self) -> &Box<dyn EventAffordance>;
 }
 
 /// Basic event implementation.
@@ -42,15 +26,21 @@ pub struct BaseEvent {
     name: String,
     data: Option<serde_json::Value>,
     time: String,
+    aff:  Box<dyn EventAffordance>
 }
 
 impl BaseEvent {
     /// Create a new BaseEvent.
-    pub fn new(name: String, data: Option<serde_json::Value>) -> Self {
+    pub fn new(
+        name: String, 
+        data: Option<serde_json::Value>,
+        aff : Box<dyn EventAffordance> 
+    ) -> Self {
         Self {
             name: name,
             data: data,
             time: timestamp(),
+            aff : aff
         }
     }
 }
@@ -69,5 +59,9 @@ impl Event for BaseEvent {
     /// Get the event's timestamp.
     fn get_time(&self) -> String {
         self.time.clone()
+    }
+
+    fn get_affordance(&self) -> &Box<dyn EventAffordance> {
+        &self.aff
     }
 }

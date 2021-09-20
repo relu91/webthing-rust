@@ -6,6 +6,7 @@ use super::json_object::JSonSerializer;
 use super::w3c_list::W3CList;
 use super::form;
 use std::collections::btree_map::BTreeMap;
+use std::marker::{Sync};
 
 ///1
 pub trait EventAffordance : InteractionAffordance {

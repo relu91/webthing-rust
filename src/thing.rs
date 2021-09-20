@@ -1,4 +1,4 @@
-use serde_json;
+ use serde_json;
 use serde_json::json;
 use std::any::Any;
 use std::collections::HashMap;
@@ -10,18 +10,22 @@ use valico::json_schema;
 use super::action::Action;
 use super::event::Event;
 use super::property::Property;
+use std::ops::Deref;
+
+use super::affordances::thing_description::ThingDescription;
+
 
 /// High-level Thing trait.
 pub trait Thing: Send + Sync {
     /// Return the thing state as a Thing Description.
     fn as_thing_description(&self) -> serde_json::Map<String, serde_json::Value>;
-
+/*
     /// Return this thing as an Any.
     fn as_any(&self) -> &dyn Any;
 
     /// Return this thing as a mutable Any.
     fn as_mut_any(&mut self) -> &mut dyn Any;
-
+*/
     /// Get this thing's href.
     fn get_href(&self) -> String;
 
@@ -201,26 +205,24 @@ pub trait Thing: Send + Sync {
     ///
     /// * `ws_id` - ID of the websocket
     fn drain_queue(&mut self, ws_id: String) -> Vec<Drain<String>>;
+
+
+    fn get_thing_description(&self) -> Box<dyn ThingDescription>;
 }
 
 /// Basic web thing implementation.
 ///
 /// This can easily be used by other things to handle most of the boring work.
-#[derive(Default)]
+//#[derive(Default)]
 pub struct BaseThing {
     id: String,
-    context: String,
-    type_: Vec<String>,
-    title: String,
-    description: String,
     properties: HashMap<String, Box<dyn Property>>,
     available_actions: HashMap<String, AvailableAction>,
     available_events: HashMap<String, AvailableEvent>,
     actions: HashMap<String, Vec<Arc<RwLock<Box<dyn Action>>>>>,
     events: Vec<Box<dyn Event>>,
     subscribers: HashMap<String, Vec<String>>,
-    href_prefix: String,
-    ui_href: Option<String>,
+    td : Box<dyn ThingDescription> 
 }
 
 impl BaseThing {
@@ -234,17 +236,17 @@ impl BaseThing {
     /// * `description` - description of the thing
     pub fn new(
         id: String,
-        title: String,
-        type_: Option<Vec<String>>,
-        description: Option<String>,
+        td : Box<dyn ThingDescription>
     ) -> Self {
         Self {
             id,
-            context: "https://webthings.io/schemas".to_owned(),
-            type_: type_.unwrap_or_else(|| vec![]),
-            title,
-            description: description.unwrap_or_else(|| "".to_string()),
-            ..Default::default()
+            properties: HashMap::new(),
+            available_actions: HashMap::new(),
+            available_events : HashMap::new(),
+            actions : HashMap::new(),
+            events : Vec::new(),
+            subscribers : HashMap::new(),
+            td : td
         }
     }
 }
@@ -252,110 +254,19 @@ impl BaseThing {
 impl Thing for BaseThing {
     /// Return the thing state as a Thing Description.
     fn as_thing_description(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut description = serde_json::Map::new();
-
-        description.insert("id".to_owned(), json!(self.get_id()));
-        description.insert("title".to_owned(), json!(self.get_title()));
-        description.insert("@context".to_owned(), json!(self.get_context()));
-        description.insert("@type".to_owned(), json!(self.get_type()));
-        description.insert(
-            "properties".to_owned(),
-            json!(self.get_property_descriptions()),
-        );
-
-        let mut links: Vec<serde_json::Map<String, serde_json::Value>> = Vec::new();
-
-        let mut properties_link = serde_json::Map::new();
-        properties_link.insert("rel".to_owned(), json!("properties"));
-        properties_link.insert(
-            "href".to_owned(),
-            json!(format!("{}/properties", self.get_href_prefix())),
-        );
-        links.push(properties_link);
-
-        let mut actions_link = serde_json::Map::new();
-        actions_link.insert("rel".to_owned(), json!("actions"));
-        actions_link.insert(
-            "href".to_owned(),
-            json!(format!("{}/actions", self.get_href_prefix())),
-        );
-        links.push(actions_link);
-
-        let mut events_link = serde_json::Map::new();
-        events_link.insert("rel".to_owned(), json!("events"));
-        events_link.insert(
-            "href".to_owned(),
-            json!(format!("{}/events", self.get_href_prefix())),
-        );
-        links.push(events_link);
-
-        let ui_href = self.get_ui_href();
-        if ui_href.is_some() {
-            let mut ui_link = serde_json::Map::new();
-            ui_link.insert("rel".to_owned(), json!("alternate"));
-            ui_link.insert("mediaType".to_owned(), json!("text/html"));
-            ui_link.insert("href".to_owned(), json!(ui_href.unwrap()));
-            links.push(ui_link);
-        }
-
-        description.insert("links".to_owned(), json!(links));
-
-        let mut actions = serde_json::Map::new();
-        for (name, action) in self.available_actions.iter() {
-            let mut metadata = action.get_metadata().clone();
-            metadata.insert(
-                "links".to_string(),
-                json!([
-                    {
-                        "rel": "action",
-                        "href": format!("{}/actions/{}", self.get_href_prefix(), name),
-                    },
-                ]),
-            );
-            actions.insert(name.to_string(), json!(metadata));
-        }
-
-        description.insert("actions".to_owned(), json!(actions));
-
-        let mut events = serde_json::Map::new();
-        for (name, event) in self.available_events.iter() {
-            let mut metadata = event.get_metadata().clone();
-            metadata.insert(
-                "links".to_string(),
-                json!([
-                    {
-                        "rel": "event",
-                        "href": format!("{}/events/{}", self.get_href_prefix(), name),
-                    },
-                ]),
-            );
-            events.insert(name.to_string(), json!(metadata));
-        }
-
-        description.insert("events".to_owned(), json!(events));
-
-        if self.description.len() > 0 {
-            description.insert("description".to_owned(), json!(self.description));
-        }
-
-        description
+        self.td.deref().to_json()
     }
 
-    /// Return this thing as an Any.
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    /// Return this thing as a mutable Any.
-    fn as_mut_any(&mut self) -> &mut dyn Any {
-        self
-    }
+  
 
     /// Get this thing's href.
     fn get_href(&self) -> String {
+        let ttd  = self.td.deref();
+        if (ttd.get_)
         if self.href_prefix == "" {
             "/".to_owned()
         } else {
+
             self.href_prefix.clone()
         }
     }

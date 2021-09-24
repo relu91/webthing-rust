@@ -1,21 +1,28 @@
 use std::collections::{ BTreeMap};
 use super::property_object::PropertyObject;
-use super::action_object::ActionObject;
+use super::action_object::{ActionHandlerTrait, ActionObject};
 use super::event_object::EventObject;
 use super::super::affordances::thing_description::{ ThingDescription,ThingDescriptionFactory};
 use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
 use super::super::affordances::event_affordance::{ EventAffordance, EventAffordanceFactory};
 use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
-
-use super::super::affordances::interaction_affordance::InteractionAffordance;
-//use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
 use url::Url;
 use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
 use std::sync::Arc;
 
-
-
+///1
+/// 
+/*
+pub trait ThingObjectTraits {
+    ///1
+    fn get_actions(&self) -> & BTreeMap<String, ActionObject>;
+    //1
+    fn get_actions_mut(&mut self) -> &mut BTreeMap<String, ActionObject>;
+    ///1
+    fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>>;
+}
+*/
 ///1
 pub struct ThingObject {
     ///1
@@ -113,7 +120,7 @@ impl ThingObject {
 
         ppa.add_form(frm);
 
-        let ppo = EventObject::new(name,pa.clone());
+        let ppo = EventObject::new(name,pa.clone(), &mut*self);
 
         self.events.insert(name.to_string(),ppo);
 
@@ -135,7 +142,8 @@ impl ThingObject {
         name    : &String, 
         desc    : &Option<String>,
         href    : &Url,
-        id      : &Option<FormOperationType>
+        id      : &Option<FormOperationType>,
+        handler : Arc<Box< dyn ActionHandlerTrait>>
     ) {
         let mut pa : Arc<Box<dyn ActionAffordance>> = Arc::new(ActionAffordanceFactory::new());
         let mut ppa: &mut Box<dyn ActionAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
@@ -152,15 +160,15 @@ impl ThingObject {
         }
 
         ppa.add_form(frm);
-/*
-        let ppo = ActionObject::new(name,pa.clone());
+
+        let ppo = ActionObject::new(name,pa.clone(),&mut *self,handler);
 
         self.actions.insert(name.to_string(),ppo);
 
         let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
         td.add_action(name,pa.clone());
 
-*/
+
     }
     ///1
     pub fn  remove_action(&mut self, k : &String) {
@@ -169,8 +177,18 @@ impl ThingObject {
         td.remove_action(k);
     }
 
+    fn get_actions(&self) -> & BTreeMap<String, ActionObject> {
+        &self.actions
+    }
+    //1
+    fn get_actions_mut(&mut self) -> &mut BTreeMap<String, ActionObject> {
+        &mut self.actions
+    }
     ///1
-    pub fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>>{
+    fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>> {
         self.td.clone()
     }
+
+
 }
+

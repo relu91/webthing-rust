@@ -4,23 +4,31 @@ use super::observable_object::ObservableObject;
 use super::super::affordances::event_affordance::EventAffordance;
 use std::collections::BTreeSet;
 use std::sync::Arc;
+use super::thing_object::ThingObject;
+
+
 
 ///1
 
 pub struct EventObject {
+  ///1
   def : Arc<Box<dyn EventAffordance>>,
+  ///1
   name: String ,
-  subs: BTreeSet<String>
-
+  ///1
+  subs: BTreeSet<String>,
+  ///1
+  owner : * mut ThingObject,
 }
 
 impl EventObject {
     ///1
-    pub fn new(n: &String, pa : Arc<Box<dyn EventAffordance>>) -> Self {
-        EventObject {
+    pub fn new(n: &String, pa : Arc<Box<dyn EventAffordance>>, o: *mut  ThingObject) -> Self {
+        EventObject{
             def : pa,
             name : n.to_string(),
-            subs : BTreeSet::new()
+            subs : BTreeSet::new(),
+            owner: o
         }
     }
 }

@@ -128,7 +128,12 @@ pub (crate) mod JSONSerialzerHelpers {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
             match self {
                 W3CList::List(ref list) => {
-                    tgt.insert(n, serde_json::json!(list));
+                    let mut tmp = Vec::new();
+                    for u in list.iter() {
+                        tmp.push(u.to_string());
+                    }
+
+                    tgt.insert(n, serde_json::json!(tmp));
                 }
                 W3CList::Single(ref single) => {
                     tgt.insert(n, serde_json::Value::String(single.to_string()));

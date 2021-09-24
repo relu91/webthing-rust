@@ -45,30 +45,39 @@ impl fmt::Display for FormOperationType  {
     }
 }
 ///Base form definition
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Form {
+    ///1
     pub security : BTreeSet<String>,
+    ///1
     pub scopes : BTreeSet<String>,
+    ///1
     pub method_name : String,
+    ///1
     pub subprotocol: String,
+    ///1
     pub content_type : String,
+    ///1
     pub content_coding : String,
+    ///1
     pub op : EnumSet<FormOperationType>,
+    ///1
     pub href : Url,
+    ///1
     pub response: Option<ExpectedResponse>,
 
 }
 impl PartialEq for Form {
     fn eq(&self, other: &Self) -> bool {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         s1 == s2
     }
 }
 impl PartialOrd for Form {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         Some(s1.cmp(&s2))
 
     }
@@ -78,11 +87,12 @@ impl Eq for Form {}
 
 impl Ord for Form {
     fn cmp(&self, other: &Self) -> Ordering {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         s1.cmp(&s2)
     }
 }
+
 
 impl JSonObject for Form {
     fn to_json(&self) ->  serde_json::Map<String, serde_json::Value> {

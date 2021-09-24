@@ -4,7 +4,7 @@ use url::Url;
 use std::collections::btree_map::BTreeMap;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
-
+use std::marker::{Send, Sync};
 
 #[derive(Debug,Clone)] 
 ///1
@@ -40,7 +40,7 @@ pub enum SecuritySchemeInLocation {
 }
 
 ///1
-pub trait SecurityScheme :  Debug +  JSonObject  {
+pub trait SecurityScheme :  Debug +  JSonObject + Sync + Send{
     ///1
     fn get_description(&self) -> &Option<String>;
     ///1

@@ -1,4 +1,4 @@
-use std::collections::{ BTreeMap,BTreeSet };
+use std::collections::{ BTreeMap};
 use super::property_object::PropertyObject;
 use super::action_object::ActionObject;
 use super::event_object::EventObject;
@@ -6,6 +6,9 @@ use super::super::affordances::thing_description::{ ThingDescription,ThingDescri
 use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
 use super::super::affordances::event_affordance::{ EventAffordance, EventAffordanceFactory};
 use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
+
+use super::super::affordances::interaction_affordance::InteractionAffordance;
+//use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
 use url::Url;
 use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
@@ -13,16 +16,26 @@ use std::sync::Arc;
 
 
 
-
+///1
 pub struct ThingObject {
+    ///1
     td                  : Arc<Box<dyn ThingDescription>>,
+    ///1
     props               : BTreeMap<String, PropertyObject>,
+    ///1
     actions             : BTreeMap<String, ActionObject>,
+    ///1
     events              : BTreeMap<String, EventObject>
 
 }
 
+fn coerce<S: ?Sized>(r: &mut Box<S>) -> &mut S {
+    r
+}
+
+
 impl ThingObject {
+    ///1
     pub fn new(ctx : &Url) -> Self {
         let ret  = ThingObject {
             td : Arc::new(ThingDescriptionFactory::new(ctx)),
@@ -34,7 +47,8 @@ impl ThingObject {
 
         ret
     }
-
+    
+    ///1
     pub fn add_property(
         &mut self, 
         name    : &String, 
@@ -42,13 +56,15 @@ impl ThingObject {
         href    : &Url,
         id      : &Option<FormOperationType>
     ) {
-        let mut pa : Box<dyn PropertyAffordance> = PropertyAffordanceFactory::new();
-        let mut ppa = pa.as_mut();
+        let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
+        let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
+        let mut s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
 
-        super::super::affordances::interaction_affordance::InteractionAffordance::set_title(ppa,&Some(name.to_string()));
-        super::super::affordances::interaction_affordance::InteractionAffordance::set_description(ppa, desc);
+        PropertyAffordance::set_description(&mut *s_ref,desc);
+        PropertyAffordance::set_title(&mut *s_ref,&Some(name.clone()));
 
-        let frm  : Form = Form::new(href);
+
+        let mut frm  : Form = Form::new(href);
 
         match id {
             None => (),
@@ -57,20 +73,23 @@ impl ThingObject {
 
         ppa.add_form(frm);
 
-        let ppo = PropertyObject::new(name,pa);
+        let ppo = PropertyObject::new(name,pa.clone());
 
         self.props.insert(name.to_string(),ppo);
 
-        self.td.add_property(name,&pa);
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+
+        td.add_property(name,pa.clone());
 
 
     }
-
+    ///1
     pub fn  remove_property(&mut self, k : &String) {
         self.props.remove(k);
-        self.td.remove_property(k);
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        td.remove_property(k);
     }
-
+    ///1
     pub fn add_event(
         &mut self, 
         name    : &String, 
@@ -78,13 +97,14 @@ impl ThingObject {
         href    : &Url,
         id      : &Option<FormOperationType>
     ) {
-        let mut pa : Box<dyn EventAffordance> = EventAffordanceFactory::new();
-        let mut ppa = pa.as_mut();
+        let mut pa : Arc<Box<dyn EventAffordance>> = Arc::new(EventAffordanceFactory::new());
+        let mut ppa: &mut Box<dyn EventAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
+        let mut s_ref: &mut dyn EventAffordance = coerce(&mut ppa);
 
-        super::super::affordances::interaction_affordance::InteractionAffordance::set_title(ppa,&Some(name.to_string()));
-        super::super::affordances::interaction_affordance::InteractionAffordance::set_description(ppa, desc);
+        super::super::affordances::interaction_affordance::InteractionAffordance::set_title(s_ref,&Some(name.to_string()));
+        super::super::affordances::interaction_affordance::InteractionAffordance::set_description( s_ref, desc);
 
-        let frm  : Form = Form::new(href);
+        let mut frm  : Form = Form::new(href);
 
         match id {
             None => (),
@@ -93,23 +113,64 @@ impl ThingObject {
 
         ppa.add_form(frm);
 
-        let ppo = EventObject::new(name,pa);
+        let ppo = EventObject::new(name,pa.clone());
 
         self.events.insert(name.to_string(),ppo);
 
-        self.td.add_event(name,&pa);
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        td.add_event(name,pa.clone());
 
 
     }
-
+    ///1
     pub fn  remove_event(&mut self, k : &String) {
         self.events.remove(k);
-        self.td.remove_event(k);
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        td.remove_event(k);
     }
 
+    ///1
+    pub fn add_action(
+        &mut self, 
+        name    : &String, 
+        desc    : &Option<String>,
+        href    : &Url,
+        id      : &Option<FormOperationType>
+    ) {
+        let mut pa : Arc<Box<dyn ActionAffordance>> = Arc::new(ActionAffordanceFactory::new());
+        let mut ppa: &mut Box<dyn ActionAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
+        let mut s_ref: &mut dyn ActionAffordance = coerce(&mut ppa);
 
+        super::super::affordances::interaction_affordance::InteractionAffordance::set_title(s_ref,&Some(name.to_string()));
+        super::super::affordances::interaction_affordance::InteractionAffordance::set_description( s_ref, desc);
 
+        let mut frm  : Form = Form::new(href);
+
+        match id {
+            None => (),
+            Some(x) => frm.set_operation(*x),
+        }
+
+        ppa.add_form(frm);
+/*
+        let ppo = ActionObject::new(name,pa.clone());
+
+        self.actions.insert(name.to_string(),ppo);
+
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        td.add_action(name,pa.clone());
+
+*/
+    }
+    ///1
+    pub fn  remove_action(&mut self, k : &String) {
+        self.actions.remove(k);
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        td.remove_action(k);
+    }
+
+    ///1
     pub fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>>{
-        self.td
+        self.td.clone()
     }
 }

@@ -3,17 +3,20 @@ use super::notifiable_object::NotifiableObject;
 use super::observable_object::ObservableObject;
 use super::super::affordances::event_affordance::EventAffordance;
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 ///1
+
 pub struct EventObject {
-  def : Box<dyn EventAffordance>,
+  def : Arc<Box<dyn EventAffordance>>,
   name: String ,
   subs: BTreeSet<String>
 
 }
 
 impl EventObject {
-    pub fn new(n: &String, pa : Box<dyn EventAffordance>) -> Self {
+    ///1
+    pub fn new(n: &String, pa : Arc<Box<dyn EventAffordance>>) -> Self {
         EventObject {
             def : pa,
             name : n.to_string(),

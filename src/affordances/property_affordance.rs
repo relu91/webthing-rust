@@ -21,6 +21,16 @@ pub trait PropertyAffordance : InteractionAffordance + DataSchema {
 
     ///1
     fn set_interaction(&mut self, v: Box<dyn InteractionAffordance>);
+
+    ///1
+    fn get_description(&self) -> &Option<String>;
+    ///1
+    fn set_description(&mut self, v : &Option<String>);
+    ///1
+    fn get_title(&self) -> &Option<String>;
+    ///1
+    fn set_title(&mut self, v : &Option<String>);
+    
     
 }
 
@@ -237,6 +247,22 @@ impl PropertyAffordance for BasePropertyAffordance {
     }
     fn set_interaction(&mut self, v: Box<dyn InteractionAffordance>) {
         self.base_interaction = v;
+    }
+    fn get_description(&self) -> &Option<String> {
+        self.base_interaction.get_description()
+    }
+    ///1
+    fn set_description(&mut self, v : &Option<String>) {
+        self.base_interaction.set_description(v);
+    }
+
+    ///1
+    fn get_title(&self) -> &Option<String> {
+        self.base_interaction.get_title()
+    }
+    ///1
+    fn set_title(&mut self, v : &Option<String>) {
+        self.base_interaction.set_title(v)
     }
 
 }

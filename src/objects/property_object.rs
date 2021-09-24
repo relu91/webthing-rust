@@ -1,20 +1,24 @@
 use std::collections::BTreeSet;
 use super::super::affordances::property_affordance::PropertyAffordance;
 use super::observable_object::ObservableObject;
+use std::sync::Arc;
 
 ///used for base property implementation 
-
-
 pub struct PropertyObject  {
-    def : Box<dyn PropertyAffordance>,
+    ///1
+    def : Arc<Box<dyn PropertyAffordance>>,
+    ///1
     val : Option<serde_json::Value>,
+    ///1
     name: String ,
+    ///1
     subs: BTreeSet<String>
 }
 
 
 impl PropertyObject {
-    pub fn new(n: &String, pa : Box<dyn PropertyAffordance>) -> Self {
+    ///1
+    pub fn new(n: &String, pa : Arc<Box<dyn PropertyAffordance>>) -> Self {
         PropertyObject {
             def : pa,
             val : None,
@@ -22,10 +26,11 @@ impl PropertyObject {
             subs : BTreeSet::new()
         }
     }
-
+    ///1
     pub fn  get_value(&self) -> &Option<serde_json::Value> {
         &self.val
     }
+    ///1
     pub fn set_value(&mut self, v: &Option<serde_json::Value>) {
         self.val = v.clone();
 
@@ -35,7 +40,7 @@ impl PropertyObject {
         }
 
     }
-
+    ///1
     pub fn get_definition(&self) -> &Box<dyn PropertyAffordance> {
         &self.def
     }

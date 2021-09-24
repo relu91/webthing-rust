@@ -13,10 +13,12 @@ use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
 use super::security_scheme::SecurityScheme;
 use std::fmt::Debug;
+use std::marker::{Send, Sync};
+use std::sync::Arc;
 
 
 ///1
-pub trait ThingDescription : Debug + JSonObject{
+pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     ///1
     fn get_context(&self) -> &W3CList<Url>;
     ///1
@@ -78,46 +80,46 @@ pub trait ThingDescription : Debug + JSonObject{
     fn set_base(&mut self, v : &Option<Url>);
 
     ///1
-    fn get_properties(&self) -> &BTreeMap<String, Box<dyn PropertyAffordance>>;
+    fn get_properties(&self) -> &BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>;
     ///1
-    fn set_properties(&mut self, v: &BTreeMap<String, Box<dyn PropertyAffordance>>);
+    fn set_properties(&mut self, v: &BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>);
     ///1
     fn clear_properties(&mut self);
     ///1
-    fn add_property(&mut self, k: &String, v : &Box<dyn PropertyAffordance>);
+    fn add_property(&mut self, k: &String, v : Arc<Box<dyn PropertyAffordance>>);
     ///1
     fn remove_property(&mut self, v : &String);
     ///1
-    fn get_property(&self, k : &String) -> Option<&Box<dyn PropertyAffordance>>;
+    fn get_property(&self, k : &String) -> Option<&Arc<Box<dyn PropertyAffordance>>>;
 
 
     ///1
-    fn get_events(&self) -> &BTreeMap<String, Box<dyn EventAffordance>>;
+    fn get_events(&self) -> &BTreeMap<String, Arc<Box<dyn EventAffordance>>>;
     ///1
-    fn set_events(&mut self, v: &BTreeMap<String, Box<dyn EventAffordance>>);
+    fn set_events(&mut self, v: &BTreeMap<String, Arc<Box<dyn EventAffordance>>>);
     ///1
     fn clear_events(&mut self);
     ///1
-    fn add_event(&mut self, k: &String, v : &Box<dyn EventAffordance>);
+    fn add_event(&mut self, k: &String, v : Arc<Box<dyn EventAffordance>>);
     ///1
     fn remove_event(&mut self, v : &String);
     ///1
-    fn get_event(&self, k : &String) -> Option<&Box<dyn EventAffordance>>;
+    fn get_event(&self, k : &String) -> Option<&Arc<Box<dyn EventAffordance>>>;
 
 
 
     ///1
-    fn get_actions(&self) -> &BTreeMap<String, Box<dyn ActionAffordance>>;
+    fn get_actions(&self) -> &BTreeMap<String, Arc<Box<dyn ActionAffordance>>>;
     ///1
-    fn set_actions(&mut self, v: &BTreeMap<String, Box<dyn ActionAffordance>>);
+    fn set_actions(&mut self, v: &BTreeMap<String, Arc<Box<dyn ActionAffordance>>>);
     ///1
     fn clear_actions(&mut self);
     ///1
-    fn add_action(&mut self, k: &String, v : &Box<dyn ActionAffordance>);
+    fn add_action(&mut self, k: &String, v : Arc<Box<dyn ActionAffordance>>);
     ///1
     fn remove_action(&mut self, v : &String);
     ///1
-    fn get_action(&self, k : &String) -> Option<&Box<dyn ActionAffordance>>;
+    fn get_action(&self, k : &String) -> Option<&Arc<Box<dyn ActionAffordance>>>;
 
 
     ///1
@@ -153,18 +155,18 @@ pub trait ThingDescription : Debug + JSonObject{
     ///1
     fn set_security(&mut self, v : &W3CList<String>);
 
-    //1
-    fn get_security_definitions(&self) -> &BTreeMap<String, Box<dyn SecurityScheme>>;
-    //1
-    fn set_security_definitions(&mut self, v :  &BTreeMap<String, Box<dyn SecurityScheme>>);
+    ///1
+    fn get_security_definitions(&self) -> &BTreeMap<String, Arc<Box<dyn SecurityScheme>>>;
+    ///1
+    fn set_security_definitions(&mut self, v :  &BTreeMap<String, Arc<Box<dyn SecurityScheme>>>);
     ///1
     fn clear_security_definitions(&mut self);
     ///1
-    fn add_security_definition(&mut self, k: &String, v : &Box<dyn SecurityScheme>);
+    fn add_security_definition(&mut self, k: &String, v : Arc<Box<dyn SecurityScheme>>);
     ///2
     fn remove_security_definition(&mut self, k : &String);
     ///1
-    fn get_security_definition(&self, k: &String) -> Option<&Box<dyn SecurityScheme>>;
+    fn get_security_definition(&self, k: &String) -> Option<&Arc<Box<dyn SecurityScheme>>>;
 }
 
 
@@ -180,13 +182,13 @@ struct BaseThingDescription {
     modified: Option<DateTime<Utc>>,
     base    : Option<Url>,
     support : Option<Url>,
-    props   : BTreeMap<String, Box<dyn PropertyAffordance>>,
-    evts    : BTreeMap<String, Box<dyn EventAffordance>>,
-    acts    : BTreeMap<String, Box<dyn ActionAffordance>>,
+    props   : BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>,
+    evts    : BTreeMap<String, Arc<Box<dyn EventAffordance>>>,
+    acts    : BTreeMap<String, Arc<Box<dyn ActionAffordance>>>,
     forms   : BTreeSet<Form>,
     links   : BTreeSet<Link>,
     sec     : W3CList<String>,
-    sec_defs: BTreeMap<String, Box<dyn SecurityScheme>>
+    sec_defs: BTreeMap<String, Arc<Box<dyn SecurityScheme>>>
 }
 
 impl BaseThingDescription {
@@ -320,7 +322,7 @@ impl ThingDescription for BaseThingDescription {
     fn set_i18n_title(&mut self, k : &String , v: Option<String>) {
         match v {
             None => self.titles.remove(k),
-            Some(x) => self.titles.insert(k.clone(), v.unwrap())
+            Some(x) => self.titles.insert(k.clone(), x.clone())
         };
         
     }
@@ -332,7 +334,7 @@ impl ThingDescription for BaseThingDescription {
     fn set_i18n_description(&mut self, k : &String , v: Option<String>) {
         match v {
             None => self.descs.remove(k),
-            Some(x) => self.descs.insert(k.clone(), v.unwrap())
+            Some(x) => self.descs.insert(k.clone(), x)
         };
 
     }
@@ -365,11 +367,11 @@ impl ThingDescription for BaseThingDescription {
     }
 
     ///1
-    fn get_properties(&self) -> &BTreeMap<String, Box<dyn PropertyAffordance>> {
+    fn get_properties(&self) -> &BTreeMap<String, Arc<Box<dyn PropertyAffordance>>> {
         &self.props
     }
-    fn set_properties(&mut self, v: &BTreeMap<String, Box<dyn PropertyAffordance>>) {
-        self.props = *v.clone();
+    fn set_properties(&mut self, v: &BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>) {
+        self.props = v.clone();
     }
     ///1
     ///1
@@ -377,68 +379,68 @@ impl ThingDescription for BaseThingDescription {
         self.props.clear();
     }
     ///1
-    fn add_property(&mut self, k: &String, v : &Box<dyn PropertyAffordance>) {
-        self.props.insert(k.clone(),*v.clone());  
+    fn add_property(&mut self, k: &String, v : Arc<Box<dyn PropertyAffordance>>) {
+        self.props.insert(k.clone(),v);  
     }
     ///1
     fn remove_property(&mut self, v : &String) {
         self.props.remove(v);
     }
     ///1
-    fn get_property(&self, k : &String) -> Option<&Box<dyn PropertyAffordance>> {
+    fn get_property(&self, k : &String) -> Option<&Arc<Box<dyn PropertyAffordance>>> {
         self.props.get(k)
     }
 
 
     ///1
-    fn get_events(&self) -> &BTreeMap<String, Box<dyn EventAffordance>> {
+    fn get_events(&self) -> &BTreeMap<String, Arc<Box<dyn EventAffordance>>> {
         &self.evts
     }
     ///1
-    fn set_events(&mut self, v: &BTreeMap<String, Box<dyn EventAffordance>>) {
-        self.evts = *v.clone();
+    fn set_events(&mut self, v: &BTreeMap<String, Arc<Box<dyn EventAffordance>>>) {
+        self.evts = v.clone();
     }
     ///1
     fn clear_events(&mut self) {
         self.evts.clear();
     }
     ///1
-    fn add_event(&mut self, k: &String, v : &Box<dyn EventAffordance>) {
-        self.evts.insert(k.clone(), *v.clone());
+    fn add_event(&mut self, k: &String, v : Arc<Box<dyn EventAffordance>>) {
+        self.evts.insert(k.clone(), v.clone());
     }
     ///1
     fn remove_event(&mut self, v : &String) {
         self.evts.remove(v);
     }
     ///1
-    fn get_event(&self, k : &String) -> Option<&Box<dyn EventAffordance>> {
+    fn get_event(&self, k : &String) -> Option<&Arc<Box<dyn EventAffordance>>> {
         self.evts.get(k)
     }
 
 
 
     ///1
-    fn get_actions(&self) -> &BTreeMap<String, Box<dyn ActionAffordance>> {
+    fn get_actions(&self) -> &BTreeMap<String, Arc<Box<dyn ActionAffordance>>> {
         &self.acts
     }
     ///1
-    fn set_actions(&mut self, v: &BTreeMap<String, Box<dyn ActionAffordance>>) {
-        self.acts = *v.clone();
+    fn set_actions(&mut self, v: &BTreeMap<String, Arc<Box<dyn ActionAffordance>>>) {
+        self.acts = v.clone();
     }
     ///1
     fn clear_actions(&mut self) {
         self.acts.clear();
     }
     ///1
-    fn add_action(&mut self, k: &String, v : &Box<dyn ActionAffordance>) {
-        self.acts.insert(k.clone(), *v.clone());
+    fn add_action(&mut self, k: &String, v : Arc<Box<dyn ActionAffordance>>) {
+        self.acts.insert(k.clone(), v.clone());
     }
     ///1
     fn remove_action(&mut self, v : &String) {
         self.acts.remove(v);
     }
     ///1
-    fn get_action(&self, k : &String) -> Option<&Box<dyn ActionAffordance>> {
+    fn get_action(&self, k : &String) -> Option<&Arc<Box<dyn ActionAffordance>>> {
         self.acts.get(k)
     }
 
@@ -475,7 +477,7 @@ impl ThingDescription for BaseThingDescription {
     }
     ///2
     fn set_forms(&mut self, v : &BTreeSet<Form>) {
-        self.forms = *v.clone();
+        //self.forms = &v.clone();
     }
     ///1
     fn clear_forms(&mut self) {
@@ -483,7 +485,7 @@ impl ThingDescription for BaseThingDescription {
     }
     ///1
     fn add_form(&mut self,v  : &Form ) {
-        self.forms.insert(*v.clone());
+        self.forms.insert(v.clone());
     }
     ///1
     fn remove_form(&mut self, k : &Url) {
@@ -505,31 +507,33 @@ impl ThingDescription for BaseThingDescription {
     }
 
     //1
-    fn get_security_definitions(&self) -> &BTreeMap<String, Box<dyn SecurityScheme>> {
+    fn get_security_definitions(&self) -> &BTreeMap<String, Arc<Box<dyn SecurityScheme>>> {
         &self.sec_defs
     }
     //1
-    fn set_security_definitions(&mut self, v :  &BTreeMap<String, Box<dyn SecurityScheme>>) {
-        self.sec_defs = *v.clone();
+    fn set_security_definitions(&mut self, v :  &BTreeMap<String, Arc<Box<dyn SecurityScheme>>>) {
+        self.sec_defs = v.clone();
     }
     ///1
     fn clear_security_definitions(&mut self) {
         self.sec_defs.clear();
     }
     ///1
-    fn add_security_definition(&mut self, k: &String, v : &Box<dyn SecurityScheme>) {
-        self.sec_defs.insert(k.clone(), *v.clone());
+    fn add_security_definition(&mut self, k: &String, v : Arc<Box<dyn SecurityScheme>>) {
+        self.sec_defs.insert(k.clone(), v.clone());
     }
     ///2
     fn remove_security_definition(&mut self, k : &String) {
         self.sec_defs.remove(k);
     }
     ///1
-    fn get_security_definition(&self, k: &String) -> Option<&Box<dyn SecurityScheme>> {
+    fn get_security_definition(&self, k: &String) -> Option<&Arc<Box<dyn SecurityScheme>>> {
         self.sec_defs.get(k)
     }
     
 }
+
+///1
 pub struct ThingDescriptionFactory {
 
 }

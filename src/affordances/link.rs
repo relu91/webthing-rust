@@ -9,27 +9,31 @@ use std::cmp::Ordering;
 
 
 
-
+///1
 #[derive(Debug,Clone)]
 pub struct Link {
+    ///1
     pub href    : Url,
+    ///1
     pub stype   : Option<String>,
+    ///1
     pub rel     : Option<String>,
+    ///1
     pub anchor  : Option<Url>
 }
 
 impl Ord for Link {
     fn cmp(&self, other: &Self) -> Ordering {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         s1.cmp(&s2)
     }
 
 }
 impl PartialOrd for Link {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         Some(s1.cmp(&s2))
 
     }
@@ -37,8 +41,8 @@ impl PartialOrd for Link {
 }
 impl PartialEq for Link {
     fn eq(&self, other: &Self) -> bool {
-        let s1  = self.href;
-        let s2 = other.href;
+        let s1  = &self.href;
+        let s2 = &other.href;
         s1 == s2
     }
 
@@ -64,6 +68,7 @@ impl JSonObject for Link {
 
 
 impl Link {
+    ///1
     pub fn new(h : &Url) -> Self {
         Self {
             href : h.clone(),

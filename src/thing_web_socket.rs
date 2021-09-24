@@ -1,3 +1,4 @@
+/*
 use actix;
 use actix::prelude::*;
 use actix_service::{Service, Transform};
@@ -223,3 +224,4 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
         }
     }
 }
+*/

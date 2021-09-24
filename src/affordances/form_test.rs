@@ -6,16 +6,18 @@ mod test {
     use super::super::form::Form;
     use super::super::json_object::JSonObject;
     use super::super::form::FormOperationType;
-/*    
+    use url::Url;
+    
      #[test]
      
      pub fn test_form() {
-        let href = "http://1.2.3.4" ;
+        let hhref = "/pippo/1.2.3.4" ;
+        let href = &Url::parse(hhref).ok().unwrap();
         let content_type = "application/json";
         let content_coding = "pippo";
         let op = FormOperationType::ReadProperty;
 
-        let ref mut f = Form::new(href.to_string());
+        let ref mut f = Form::new( href);
 
         assert_eq!(f.get_href(), href);
 
@@ -45,5 +47,5 @@ mod test {
         println!("Output : {}",ss);
 
     }
-*/
+
 }

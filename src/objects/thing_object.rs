@@ -10,6 +10,7 @@ use url::Url;
 use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
 use std::sync::Arc;
+use std::marker::Sync;
 
 ///1
 /// 
@@ -24,6 +25,7 @@ pub trait ThingObjectTraits {
 }
 */
 ///1
+
 pub struct ThingObject {
     ///1
     td                  : Arc<Box<dyn ThingDescription>>,
@@ -35,6 +37,8 @@ pub struct ThingObject {
     events              : BTreeMap<String, EventObject>
 
 }
+unsafe impl Sync for ThingObject {}
+unsafe impl Send for ThingObject {}
 
 fn coerce<S: ?Sized>(r: &mut Box<S>) -> &mut S {
     r
@@ -97,6 +101,15 @@ impl ThingObject {
         td.remove_property(k);
     }
     ///1
+    pub fn get_properties(&self) -> & BTreeMap<String, PropertyObject> {
+        &self.props
+    }
+    ///1
+    pub fn get_properties_mut(&mut self) -> &mut BTreeMap<String, PropertyObject> {
+        &mut self.props
+    }
+
+    ///1
     pub fn add_event(
         &mut self, 
         name    : &String, 
@@ -134,6 +147,14 @@ impl ThingObject {
         self.events.remove(k);
         let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
         td.remove_event(k);
+    }
+    ///1
+    pub fn get_events(&self) -> & BTreeMap<String, EventObject> {
+        &self.events
+    }
+    ///1
+    pub fn get_events_mut(&mut self) -> &mut BTreeMap<String, EventObject> {
+        &mut self.events
     }
 
     ///1
@@ -176,19 +197,42 @@ impl ThingObject {
         let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
         td.remove_action(k);
     }
-
-    fn get_actions(&self) -> & BTreeMap<String, ActionObject> {
+    ///1
+    pub fn get_actions(&self) -> & BTreeMap<String, ActionObject> {
         &self.actions
     }
-    //1
-    fn get_actions_mut(&mut self) -> &mut BTreeMap<String, ActionObject> {
+    ///1
+    pub fn get_actions_mut(&mut self) -> &mut BTreeMap<String, ActionObject> {
         &mut self.actions
     }
     ///1
-    fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>> {
+    pub fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>> {
         self.td.clone()
     }
-
-
+    ///1
+    pub fn get_property(&self, n : &String) -> Option<&PropertyObject> {
+        self.props.get(n)
+    }
+    ///1
+    pub fn get_property_mut(&mut self, n : &String) -> Option<&mut PropertyObject> {
+        self.props.get_mut(n)
+    }
+    ///1
+    pub fn get_event(&self, n : &String) -> Option<&EventObject> {
+        self.events.get(n)
+    }
+    ///1
+    pub fn get_event_mut(&mut self, n : &String) -> Option<&mut EventObject> {
+        self.events.get_mut(n)
+    }
+    ///1
+    pub fn get_action(&self, n : &String) -> Option<&ActionObject> {
+        self.actions.get(n)
+    }
+    ///1
+    pub fn get_action_mut(&mut self, n : &String) -> Option<&mut ActionObject> {
+        self.actions.get_mut(n)
+    }
+    
 }
 

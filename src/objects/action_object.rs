@@ -2,7 +2,7 @@ use super::super::affordances::action_affordance::ActionAffordance;
 use std::sync::Arc;
 use super::thing_object::ThingObject;
 
-
+///1
 pub struct ActionObject {
   ///1
   def : Arc<Box<dyn ActionAffordance>>,
@@ -17,6 +17,7 @@ pub struct ActionObject {
 }
 
 impl ActionObject {
+    ///1
     pub fn new(n: &String, pa : Arc<Box<dyn ActionAffordance>>, o: *mut  ThingObject, h :  Arc<Box< dyn ActionHandlerTrait>>) -> Self {
         ActionObject{
             def : pa,
@@ -25,8 +26,14 @@ impl ActionObject {
             handler : h
         }
     }
+    ///1
+    pub fn handle(&mut self) {
+       
+        self.handler.clone().handle(&mut *self);
+    }
 }
 ///1
 pub trait ActionHandlerTrait {
-    fn handle(&self, a: &mut ActionObject);
+    ///1
+    fn handle(&self, a: *mut ActionObject);
 }

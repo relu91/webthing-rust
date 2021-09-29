@@ -34,15 +34,20 @@ pub mod thing_server;
 ///1
 pub mod thing_web_socket;
 
-//pub use thing_server::ThingServer;
-
-mod managed_thing_collection;
-
 ///Expected response data
 pub mod affordances;
 ///1
 pub mod objects;
 
+
+pub use affordances::action_affordance::ActionAffordance;
+pub use affordances::event_affordance::EventAffordance;
+pub use affordances::property_affordance::PropertyAffordance;
+
+pub use objects::thing_object::ThingObject;
+pub use objects::action_object::{ ActionObject, ActionHandlerTrait};
+pub use objects::event_object::EventObject;
+pub use objects::property_object::PropertyObject;
 
 
 

@@ -52,13 +52,13 @@ pub struct Form {
     ///1
     pub scopes : BTreeSet<String>,
     ///1
-    pub method_name : String,
+    pub method_name : Option<String>,
     ///1
-    pub subprotocol: String,
+    pub subprotocol:  Option<String>,
     ///1
-    pub content_type : String,
+    pub content_type :  Option<String>,
     ///1
-    pub content_coding : String,
+    pub content_coding :  Option<String>,
     ///1
     pub op : EnumSet<FormOperationType>,
     ///1
@@ -123,10 +123,10 @@ impl Form {
             security : BTreeSet::new(),
             scopes :  BTreeSet::new(),
             op : EnumSet::new(),
-            method_name : String::from(""),
-            subprotocol : String::from(""),
-            content_type : String::from(""),
-            content_coding : String::from(""),
+            method_name : None,
+            subprotocol : None,
+            content_type : None,
+            content_coding : None,
             response : None
         }
     }
@@ -154,38 +154,38 @@ impl Form {
     }
 
     ///Get form content type
-    pub fn get_content_type(&self) -> String {
-        return self.content_type.clone();
+    pub fn get_content_type(&self) -> &Option<String> {
+        &self.content_type
     }
     ///Set form content type
-    pub  fn set_content_type(&mut self, v: String ) {
-        self.content_type = v;
+    pub  fn set_content_type(&mut self, v: &Option<String> ) {
+        self.content_type = v.clone();
     }
     ///Get form content coding
-    pub fn get_content_coding(&self) -> String {
-        return self.content_coding.clone();
+    pub fn get_content_coding(&self) -> &Option<String> {
+        &self.content_coding
     }
     ///Set form content coding
-    pub fn set_content_coding(&mut self, v: String ) {
-        self.content_coding = v;
+    pub fn set_content_coding(&mut self, v: &Option<String> ) {
+        self.content_coding = v.clone();
     }
 
     ///Get form subprotocol
-    pub fn get_subprotocol(&self) -> String {
-        return self.subprotocol.clone();
+    pub fn get_subprotocol(&self) -> &Option<String> {
+        &self.subprotocol
     }
     ///Set form subprotocol
-    pub fn set_subprotocol(&mut self, v: String ) {
-        self.subprotocol = v;
+    pub fn set_subprotocol(&mut self, v: &Option<String> ) {
+        self.subprotocol = v.clone();
     }
 
     ///Get Method name
-    pub fn get_method_name(&self) -> String {
-        return self.method_name.clone();
+    pub fn get_method_name(&self) -> &Option<String> {
+        &self.method_name
     }
     ///Set method name
-    pub fn set_method_name(&mut self, v: String ) {
-        self.method_name = v;
+    pub fn set_method_name(&mut self, v: &Option<String> ) {
+        self.method_name = v.clone();
     }
 
     ///Get form scopes

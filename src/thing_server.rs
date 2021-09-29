@@ -23,6 +23,10 @@ use std::clone::Clone;
 use std::collections::BTreeMap;
 use url::Url;
 use super::objects::thing_object::ThingObject;
+use super::affordances::interaction_affordance::{InteractionAffordance};
+use super::affordances::property_affordance::{PropertyAffordance};
+use super::affordances::form::{Form, FormOperationType};
+
 //use super::affordances::thing_description::ThingDescription;
 
 #[derive(Debug,Clone)]
@@ -43,10 +47,10 @@ struct AppState {
     things                  : BTreeMap<String, ThingObject>,
     hosts                   : Vec<String>,
     disable_host_validation: bool,
-    registered_props        : BTreeMap<Url,ThingEndpointInfo>,
-    registered_acts         : BTreeMap<Url,ThingEndpointInfo>,
-    registered_evts         : BTreeMap<Url,ThingEndpointInfo>,   
-    registered_base_forms   : BTreeMap<Url,String>
+    registered_props        : BTreeMap<String,ThingEndpointInfo>,
+    registered_acts         : BTreeMap<String,ThingEndpointInfo>,
+    registered_evts         : BTreeMap<String,ThingEndpointInfo>,   
+    registered_base_forms   : BTreeMap<String,String>
 }
 impl AppState { 
     fn validate_host(&self,host: Option<&HeaderValue>) -> Result<(), ()> {
@@ -191,7 +195,92 @@ fn handle_put_property(req: HttpRequest, state: web::Data<Arc<AppState>>) -> Htt
 }
 
 fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String) -> HttpResponse {
-    HttpResponse::NotFound().finish()
+    let app = state.as_ref().clone();
+    let u = req.path();
+
+    if app.registered_props.contains_key(u) == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    
+    let r  = app.registered_props.get(u);
+    if r.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+    let thing_info = r.unwrap();
+    
+    let thing_name : &String = &thing_info.thing_name;
+    let obj_name : &String = &thing_info.object_name;
+
+    let s_thing_obj = app.things.get(thing_name);
+
+    if s_thing_obj.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+
+    let thing_obj = &s_thing_obj.unwrap();
+
+    //go into forms
+
+    let s_po = thing_obj.get_property(obj_name);
+    
+    if s_po.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+    let po = s_po.unwrap();
+
+    let def = po.get_definition();
+
+    let mut thisMethod  : Option<String> = None;
+    let mut opid : Option<FormOperationType> = None;
+    let mut thisForm : Option<&Form> = None;
+
+    let mut found : bool = false;
+
+    for f in def.get_forms() {
+        let thisPath = f.get_href().to_string();
+        if thisPath == u {
+            thisMethod = f.get_method_name().clone();
+            if thisMethod.is_none() {
+                let opList = f.get_operation_list();
+                if opList.len() > 0 {
+                    let opid = opList.iter().next().unwrap();
+                    match opid {
+                        FormOperationType::ReadProperty => thisMethod = Some("GET".to_string()),
+                        FormOperationType::WriteProperty => thisMethod = Some("PUT".to_string()),
+                        _ => ()
+                    }
+
+
+                }
+            }
+
+            if (thisMethod.is_some() && thisMethod.unwrap() == method) {
+                found = true;
+                thisForm = Some(&f);
+                break;
+            }
+
+        }
+    }
+
+    if found == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    //now, do some access checking
+
+
+
+    //eventually build response
+    let value = po.get_value();
+    HttpResponse::Ok().json(value)
+
+
+//    HttpResponse::NotFound().finish()
+    
 }
 //action handling through plain GET/POST/PUT
 fn handle_get_action(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
@@ -258,6 +347,35 @@ async fn handle_ws_thing(
 }    
 
 impl ThingServer {
+    ///1
+    ///1
+    pub fn new(
+        base_path:  String,
+        port:       Option<u16>,
+        hostname:   Option<String>,
+        #[allow(dead_code)]
+        ssl_options: Option<(String, String)>,
+        objs       : BTreeMap<String, ThingObject>
+    ) -> Self {
+        ThingServer {
+            base_path   :   Arc::new(base_path),
+            port        :   Arc::new(port) ,
+            hostname    :   Arc::new(hostname),
+            ssl_options :   Arc::new(ssl_options),
+            dns_service :   Arc::new(None),
+            app_state   :   Arc::new( 
+                AppState { 
+                    things: objs,
+                    hosts: Vec::new(),
+                    disable_host_validation: false,
+                    registered_acts : BTreeMap::new(),
+                    registered_props : BTreeMap::new(),
+                    registered_evts: BTreeMap::new(),
+                    registered_base_forms : BTreeMap::new()
+                }  
+            )
+        }
+    }
 /*    
     pub fn get_request_type(&self, url : &Url) -> Option<ThingObjectType> {
         let mut ret :  Option<ThingObjectType>  = None;
@@ -282,14 +400,13 @@ impl ThingServer {
     pub fn start(
         &mut self,
         configure: Option<Arc<dyn Fn(&mut web::ServiceConfig) + Send + Sync + 'static>>
-    ) {
+    ) -> Server {
         let port = match *self.port {
             Some(p) => p,
             None => 80,
         };
 
         self.app_state =  Arc::new( 
-//            RwLock::new(
                 AppState { 
                     things: BTreeMap::new(),
                     hosts: Vec::new(),
@@ -299,7 +416,6 @@ impl ThingServer {
                     registered_evts: BTreeMap::new(),
                     registered_base_forms : BTreeMap::new()
                 }  
-//            )
         );
 
        //let mut appState : &mut AppState  = *self.app_state.get_mut().unwrap();ù
@@ -313,14 +429,14 @@ impl ThingServer {
             for (n,p) in td.get_properties().iter() {
                 for f in p.get_forms().iter() {
                     let u  = f.get_href();
-                    appState.registered_props.insert(u.clone(),ThingEndpointInfo::new(s,n));
+                    appState.registered_props.insert(u.to_string(),ThingEndpointInfo::new(s,n));
                 }
             }
 
             for (n,a) in td.get_actions().iter() {
                 for f in a.get_forms().iter() {
                     let u  = f.get_href();
-                    appState.registered_acts.insert(u.clone(),ThingEndpointInfo::new(s,n));
+                    appState.registered_acts.insert(u.to_string(),ThingEndpointInfo::new(s,n));
                 }
 
             }
@@ -328,7 +444,7 @@ impl ThingServer {
             for (n,e) in td.get_events().iter() {
                 for f in e.get_forms().iter() {
                     let u  = f.get_href();
-                    appState.registered_evts.insert(u.clone(),ThingEndpointInfo::new(s,n));
+                    appState.registered_evts.insert(u.to_string(),ThingEndpointInfo::new(s,n));
                     
 
                 }
@@ -338,7 +454,7 @@ impl ThingServer {
             //and base forms
             for f in td.get_forms().iter() {
                 let u  = f.get_href();
-                appState.registered_base_forms.insert(u.clone(),s.to_string());
+                appState.registered_base_forms.insert(u.to_string(),s.to_string());
             }
         }
 

@@ -27,11 +27,11 @@ mod test {
         f.set_operation(op);
 
         f.set_content_type(&Some(content_type.to_string()));
-        let ref z_content_type = f.get_content_type();
+        let ref z_content_type = f.get_content_type().clone().unwrap();
         assert_eq!(z_content_type, content_type);
 
         f.set_content_coding(&Some(content_coding.to_string()));
-        let ref z_content_coding = f.get_content_coding();
+        let ref z_content_coding = f.get_content_coding().clone().unwrap();
         assert_eq!(z_content_coding, content_coding);
 
         //assert_eq!(f.get_content_coding().to_string(), content_coding);

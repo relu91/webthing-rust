@@ -1,3 +1,4 @@
+/*
 use serde_json;
 use std::marker::{Send, Sync};
 use super::affordances::event_affordance::EventAffordance;
@@ -65,3 +66,4 @@ impl Event for BaseEvent {
         &self.aff
     }
 }
+*/

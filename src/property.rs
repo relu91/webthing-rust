@@ -1,3 +1,5 @@
+
+/*
 use serde_json;
 use std::marker::{Send, Sync};
 use super::affordances::property_affordance::PropertyAffordance;
@@ -162,3 +164,4 @@ impl Property for BaseProperty {
         &self.data
     }
 }
+*/

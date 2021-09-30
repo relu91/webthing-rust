@@ -4,6 +4,7 @@ use std::sync::{Arc, RwLock, Weak};
 use std::{thread, time};
 use uuid::Uuid;
 use std::collections::BTreeMap;
+use url::Url;
 
 use webthing::{
     thing_server::ThingServer, 
@@ -13,12 +14,25 @@ use webthing::{
     ActionObject, 
     ThingObject, 
     EventObject, 
-    PropertyObject
+    PropertyObject,
+    Form,
+    FormOperationType
 };
 
 fn make_things() -> BTreeMap<String,ThingObject> {
     let mut ret = BTreeMap::new();
 
+    let mut to = ThingObject::new(&Url::parse("/").unwrap());
+
+    to.add_property(
+        &"name".to_string(),
+        &Some("A test property".to_string()),
+        &Url::parse("/single/name").ok().unwrap(),
+        &Some(FormOperationType::ReadProperty)
+
+    );
+    
+    ret.insert("THING".to_string(),to);
 
     ret
 }

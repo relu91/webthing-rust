@@ -43,11 +43,17 @@ pub mod objects;
 pub use affordances::action_affordance::ActionAffordance;
 pub use affordances::event_affordance::EventAffordance;
 pub use affordances::property_affordance::PropertyAffordance;
+pub use affordances::form::Form;
+pub use affordances::form::FormOperationType;
+pub use affordances::link::Link;
+
 
 pub use objects::thing_object::ThingObject;
 pub use objects::action_object::{ ActionObject, ActionHandlerTrait};
 pub use objects::event_object::EventObject;
 pub use objects::property_object::PropertyObject;
+
+
 
 
 

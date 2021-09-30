@@ -1,3 +1,4 @@
+/*
 struct HostValidator;
 
 impl<S, B> Transform<S> for HostValidator
@@ -1235,3 +1236,4 @@ impl WebThingServer {
         }
     }
 }
+*/

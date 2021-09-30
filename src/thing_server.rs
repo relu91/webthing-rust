@@ -28,6 +28,7 @@ use super::affordances::property_affordance::{PropertyAffordance};
 use super::affordances::form::{Form, FormOperationType};
 
 //use super::affordances::thing_description::ThingDescription;
+const SERVICE_TYPE: &str = "_webthing._tcp";
 
 #[derive(Debug,Clone)]
 struct ThingEndpointInfo {
@@ -612,17 +613,18 @@ impl ThingServer {
                     .run()
             }
         }
-/*
+
         #[cfg(not(feature = "ssl"))]
         {
-            self.dns_service =
-                Some(responder.register(SERVICE_TYPE.to_owned(), name.clone(), port, &["path=/"]));
-            server
+            self.dns_service = Arc::new(
+                Some(responder.register(SERVICE_TYPE.to_owned(), "WSIOT".to_string(), port, &["path=/"])));
+            
+            httpServer
                 .bind(format!("0.0.0.0:{}", port))
                 .expect("Failed to bind socket")
                 .run()
         }
-*/     
+     
     }
 }
 

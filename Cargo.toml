@@ -26,7 +26,6 @@ uuid = { version = "0.8", features = ["v4"] }
 valico = "3.5"
 serde =  {version = "1.0.127", features = ["derive"] }
 enumset = "1.0.7" 
-url = "2.2.2"
 
 [dev-dependencies]
 actix-rt = "1.1"

@@ -110,11 +110,11 @@ impl InteractionAffordance for BaseEventAffordance {
     }
     ///1 
     fn get_uri_variables(&self) -> &BTreeMap<String, Box<dyn DataSchema> > {
-        self.get_uri_variables()
+        self.base.get_uri_variables()
     }
     ///1
     fn clear_uri_variables(&mut self) {
-        self.clear_uri_variables();
+        self.base.clear_uri_variables();
     }
 
 }

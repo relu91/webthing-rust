@@ -1,34 +1,25 @@
+
 use actix_rt;
-use serde_json::json;
-use std::sync::{Arc, RwLock, Weak};
-use std::{thread, time};
-use uuid::Uuid;
 use std::collections::BTreeMap;
-use url::Url;
+//use url::String;
 
 use webthing::{
     thing_server::ThingServer, 
-    ActionAffordance, 
-    EventAffordance, 
-    PropertyAffordance, 
-    ActionObject, 
     ThingObject, 
-    EventObject, 
-    PropertyObject,
-    Form,
     FormOperationType
 };
 
 fn make_things() -> BTreeMap<String,ThingObject> {
     let mut ret = BTreeMap::new();
 
-    let mut to = ThingObject::new(&Url::parse("/").unwrap());
+    let mut to = ThingObject::new(&"/".to_string());
 
     to.add_property(
         &"name".to_string(),
         &Some("A test property".to_string()),
-        &Url::parse("/single/name").ok().unwrap(),
-        &Some(FormOperationType::ReadProperty)
+        &"/single/name".to_string(),
+        &Some(FormOperationType::ReadProperty),
+        &Some(serde_json::Value::String("a value".to_string()))
 
     );
     
@@ -45,6 +36,7 @@ async fn main() -> std::io::Result<()> {
     // In the single thing case, the thing's name will be broadcast.
     let mut server = ThingServer::new(
         "/".to_string(),
+        true,
         Some(8888),
         None,
         None,

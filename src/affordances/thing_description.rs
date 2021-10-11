@@ -1,5 +1,5 @@
 use super::w3c_list::W3CList;
-use url::Url;
+//use url::String;
 use chrono::DateTime;
 use chrono::Utc;
 use std::collections::BTreeMap;
@@ -20,13 +20,13 @@ use std::sync::Arc;
 ///1
 pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     ///1
-    fn get_context(&self) -> &W3CList<Url>;
+    fn get_context(&self) -> &W3CList<String>;
     ///1
-    fn set_context(&mut self, v : &Url);
+    fn set_context(&mut self, v : &String);
     ///1
-    fn set_context_list(&mut self, v : &W3CList<Url>);
+    fn set_context_list(&mut self, v : &W3CList<String>);
     ///1
-    fn add_context(&mut self, v: &Url);
+    fn add_context(&mut self, v: &String);
     ///1
     fn clear_context(&mut self);
     ///1
@@ -42,9 +42,9 @@ pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     
 
     ///1
-    fn get_id(&self) -> &Option<Url>;
+    fn get_id(&self) -> &Option<String>;
     ///1
-    fn set_id(&mut self, v : &Option<Url>);
+    fn set_id(&mut self, v : &Option<String>);
 
 
     ///1
@@ -70,14 +70,14 @@ pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     fn set_modified(&mut self, v : &Option<DateTime<Utc>>);
 
     ///1
-    fn get_support(&self) -> &Option<Url>;
+    fn get_support(&self) -> &Option<String>;
     ///1
-    fn set_support(&mut self, v : &Option<Url>);
+    fn set_support(&mut self, v : &Option<String>);
 
     ///1
-    fn get_base(&self) -> &Option<Url>;
+    fn get_base(&self) -> &Option<String>;
     ///1
-    fn set_base(&mut self, v : &Option<Url>);
+    fn set_base(&mut self, v : &Option<String>);
 
     ///1
     fn get_properties(&self) -> &BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>;
@@ -131,9 +131,9 @@ pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     ///1
     fn add_link(&mut self,v  : &Link );
     ///1
-    fn remove_link(&mut self, k : &Url);
+    fn remove_link(&mut self, k : &String);
     ///1
-    fn get_link(&self, k : &Url) -> Option<&Link>;
+    fn get_link(&self, k : &String) -> Option<&Link>;
 
 
     ///1
@@ -145,9 +145,9 @@ pub trait ThingDescription : Debug + JSonObject + Sync + Send{
     ///1
     fn add_form(&mut self,v  : &Form );
     ///1
-    fn remove_form(&mut self, k : &Url);
+    fn remove_form(&mut self, k : &String);
     ///1
-    fn get_form(&self, k : &Url) -> Option<&Form>;
+    fn get_form(&self, k : &String) -> Option<&Form>;
 
 
     ///1
@@ -172,16 +172,16 @@ pub trait ThingDescription : Debug + JSonObject + Sync + Send{
 
 #[derive(Debug)]
 struct BaseThingDescription {
-    ctx     : W3CList<Url>,
+    ctx     : W3CList<String>,
     types   : W3CList<String>,
-    id      : Option<Url>,
+    id      : Option<String>,
     title   : Option<String>,
     titles  : BTreeMap<String,String>,
     desc    : Option<String>,
     descs   : BTreeMap<String,String>,
     modified: Option<DateTime<Utc>>,
-    base    : Option<Url>,
-    support : Option<Url>,
+    base    : Option<String>,
+    support : Option<String>,
     props   : BTreeMap<String, Arc<Box<dyn PropertyAffordance>>>,
     evts    : BTreeMap<String, Arc<Box<dyn EventAffordance>>>,
     acts    : BTreeMap<String, Arc<Box<dyn ActionAffordance>>>,
@@ -192,7 +192,7 @@ struct BaseThingDescription {
 }
 
 impl BaseThingDescription {
-    pub fn new( u : &Url) -> Self {
+    pub fn new( u : &String) -> Self {
         BaseThingDescription {
             ctx : W3CList::Single(u.clone()),
             types : W3CList::None, 
@@ -242,19 +242,19 @@ impl JSonObject for BaseThingDescription {
 
 impl ThingDescription for BaseThingDescription {
     ///1
-    fn get_context(&self) -> &W3CList<Url> {
+    fn get_context(&self) -> &W3CList<String> {
         &self.ctx
     }
     ///1
-    fn set_context(&mut self, v : &Url) {
+    fn set_context(&mut self, v : &String) {
         self.ctx = W3CList::Single(v.clone());
     }
     ///1
-    fn set_context_list(&mut self, v : &W3CList<Url>) {
+    fn set_context_list(&mut self, v : &W3CList<String>) {
         self.ctx = v.clone();
     }
     ///1
-    fn add_context(&mut self, v: &Url) {
+    fn add_context(&mut self, v: &String) {
 /*        
         match self.ctx {
             W3CList::List (&mut val) => val.add(v),
@@ -289,11 +289,11 @@ impl ThingDescription for BaseThingDescription {
     
 
     ///1
-    fn get_id(&self) -> &Option<Url> {
+    fn get_id(&self) -> &Option<String> {
         return &self.id;
     }
     ///1
-    fn set_id(&mut self, v : &Option<Url>) {
+    fn set_id(&mut self, v : &Option<String>) {
         self.id = v.clone();
     }
 
@@ -349,20 +349,20 @@ impl ThingDescription for BaseThingDescription {
     }
 
     ///1
-    fn get_support(&self) -> &Option<Url> {
+    fn get_support(&self) -> &Option<String> {
         &self.support
     }
     ///1
-    fn set_support(&mut self, v : &Option<Url>) {
+    fn set_support(&mut self, v : &Option<String>) {
         self.support = v.clone();
     }
 
     ///1
-    fn get_base(&self) -> &Option<Url> {
+    fn get_base(&self) -> &Option<String> {
         &self.base
     }
     ///1
-    fn set_base(&mut self, v : &Option<Url>) {
+    fn set_base(&mut self, v : &Option<String>) {
         self.base  = v.clone();
     }
 
@@ -462,11 +462,11 @@ impl ThingDescription for BaseThingDescription {
         self.links.insert(v.clone());
     }
     ///1
-    fn remove_link(&mut self, k : &Url) {
+    fn remove_link(&mut self, k : &String) {
         self.links.remove(&Link::new(k));
     }
     ///1
-    fn get_link(&self, k : &Url) -> Option<&Link> {
+    fn get_link(&self, k : &String) -> Option<&Link> {
         self.links.get(&Link::new(k))
     }
 
@@ -488,11 +488,11 @@ impl ThingDescription for BaseThingDescription {
         self.forms.insert(v.clone());
     }
     ///1
-    fn remove_form(&mut self, k : &Url) {
+    fn remove_form(&mut self, k : &String) {
         self.forms.remove(&Form::new(k));
     }
     ///1
-    fn get_form(&self, k : &Url) -> Option<&Form> {
+    fn get_form(&self, k : &String) -> Option<&Form> {
         self.forms.get(&Form::new(k))
     }
 
@@ -540,7 +540,7 @@ pub struct ThingDescriptionFactory {
 
 impl ThingDescriptionFactory {
     ///1
-    pub fn new(ctx : &Url ) -> Box<dyn ThingDescription> {
+    pub fn new(ctx : &String ) -> Box<dyn ThingDescription> {
         Box::new(BaseThingDescription::new(ctx))
     }
 }

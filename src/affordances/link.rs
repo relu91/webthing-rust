@@ -1,4 +1,4 @@
-use url::Url;
+//use url::String;
 use std::fmt::Debug;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
@@ -13,13 +13,13 @@ use std::cmp::Ordering;
 #[derive(Debug,Clone)]
 pub struct Link {
     ///1
-    pub href    : Url,
+    pub href    : String,
     ///1
     pub stype   : Option<String>,
     ///1
     pub rel     : Option<String>,
     ///1
-    pub anchor  : Option<Url>
+    pub anchor  : Option<String>
 }
 
 impl Ord for Link {
@@ -69,7 +69,7 @@ impl JSonObject for Link {
 
 impl Link {
     ///1
-    pub fn new(h : &Url) -> Self {
+    pub fn new(h : &String) -> Self {
         Self {
             href : h.clone(),
             stype : None,

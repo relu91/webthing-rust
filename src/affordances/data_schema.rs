@@ -318,7 +318,7 @@ impl BaseIntegerDataSchema {
 
 impl JSonObject for BaseIntegerDataSchema {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut m = self.to_json();
+        let mut m = self.base.to_json();
         self.min.copy("minimum".to_string(),&mut m);
         self.max.copy("maximum".to_string(),&mut m);
         m
@@ -469,7 +469,7 @@ impl BaseNumberDataSchema {
 
 impl JSonObject for BaseNumberDataSchema {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut m = self.to_json();
+        let mut m = self.base.to_json();
         self.min.copy("minimum".to_string(),&mut m);
         self.max.copy("maximum".to_string(),&mut m);
         m

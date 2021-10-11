@@ -5,7 +5,7 @@ use std::cmp::PartialOrd;
 use std::cmp::PartialEq;
 use std::cmp::Ordering;
 use enumset::EnumSet;
-use url::Url;
+//use url::String;
 
 use super::expected_response::{ExpectedResponse};
 use super::json_object::JSonObject;
@@ -62,7 +62,7 @@ pub struct Form {
     ///1
     pub op : EnumSet<FormOperationType>,
     ///1
-    pub href : Url,
+    pub href : String,
     ///1
     pub response: Option<ExpectedResponse>,
 
@@ -117,7 +117,7 @@ impl JSonObject for Form {
 }
 impl Form {
     ///Main constructor
-    pub fn new(h : &Url) -> Self {
+    pub fn new(h : &String) -> Self {
         Self {
             href : h.clone(),
             security : BTreeSet::new(),
@@ -234,11 +234,11 @@ impl Form {
     }
 
     ///Gets href
-    pub fn get_href(&self) -> &Url{
+    pub fn get_href(&self) -> &String{
         &self.href
     }
     ///Sets href
-    pub fn set_href(&mut self, h : &Url) {
+    pub fn set_href(&mut self, h : &String) {
         self.href = h.clone();
     }
 

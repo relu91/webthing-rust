@@ -6,7 +6,7 @@ use super::super::affordances::thing_description::{ ThingDescription,ThingDescri
 use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
 use super::super::affordances::event_affordance::{ EventAffordance, EventAffordanceFactory};
 use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
-use url::Url;
+//use url::String;
 use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
 use std::sync::Arc;
@@ -47,7 +47,7 @@ fn coerce<S: ?Sized>(r: &mut Box<S>) -> &mut S {
 
 impl ThingObject {
     ///1
-    pub fn new(ctx : &Url) -> Self {
+    pub fn new(ctx : &String) -> Self {
         let ret  = ThingObject {
             td : Arc::new(ThingDescriptionFactory::new(ctx)),
             props : BTreeMap::new(),
@@ -64,8 +64,9 @@ impl ThingObject {
         &mut self, 
         name    : &String, 
         desc    : &Option<String>,
-        href    : &Url,
-        id      : &Option<FormOperationType>
+        href    : &String,
+        id      : &Option<FormOperationType>,
+        init_val: &Option<serde_json::Value>
     ) {
         let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
         let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
@@ -84,12 +85,14 @@ impl ThingObject {
 
         ppa.add_form(frm);
 
-        let ppo = PropertyObject::new(name,pa.clone());
+        let mut ppo = PropertyObject::new(name,pa.clone());
+        ppo.set_value(init_val);
 
         self.props.insert(name.to_string(),ppo);
 
         let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
 
+        
         td.add_property(name,pa.clone());
 
 
@@ -114,7 +117,7 @@ impl ThingObject {
         &mut self, 
         name    : &String, 
         desc    : &Option<String>,
-        href    : &Url,
+        href    : &String,
         id      : &Option<FormOperationType>
     ) {
         let mut pa : Arc<Box<dyn EventAffordance>> = Arc::new(EventAffordanceFactory::new());
@@ -162,7 +165,7 @@ impl ThingObject {
         &mut self, 
         name    : &String, 
         desc    : &Option<String>,
-        href    : &Url,
+        href    : &String,
         id      : &Option<FormOperationType>,
         handler : Arc<Box< dyn ActionHandlerTrait>>
     ) {

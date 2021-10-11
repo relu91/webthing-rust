@@ -6,20 +6,19 @@ mod test {
     use super::super::form::Form;
     use super::super::json_object::JSonObject;
     use super::super::form::FormOperationType;
-    use url::Url;
+    //use url::String;
     
      #[test]
      
      pub fn test_form() {
-        let hhref = "/pippo/1.2.3.4" ;
-        let href = &Url::parse(hhref).ok().unwrap();
-        let content_type = "application/json";
-        let content_coding = "pippo";
+        let href = "/pippo/1.2.3.4".to_string() ;
+        let content_type = "application/json".to_string();
+        let content_coding = "pippo".to_string();
         let op = FormOperationType::ReadProperty;
 
-        let ref mut f = Form::new( href);
+        let ref mut f = Form::new(&href);
 
-        assert_eq!(f.get_href(), href);
+        assert_eq!(f.get_href(), &href);
 
         
 
@@ -28,11 +27,11 @@ mod test {
 
         f.set_content_type(&Some(content_type.to_string()));
         let ref z_content_type = f.get_content_type().clone().unwrap();
-        assert_eq!(z_content_type, content_type);
+        assert_eq!(z_content_type, &content_type);
 
         f.set_content_coding(&Some(content_coding.to_string()));
         let ref z_content_coding = f.get_content_coding().clone().unwrap();
-        assert_eq!(z_content_coding, content_coding);
+        assert_eq!(z_content_coding, &content_coding);
 
         //assert_eq!(f.get_content_coding().to_string(), content_coding);
         let ref zop = f.get_operation_list();

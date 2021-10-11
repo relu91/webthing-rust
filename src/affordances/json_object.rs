@@ -25,7 +25,7 @@ pub (crate) mod JSONSerialzerHelpers {
     use chrono::Utc;
 
     use enumset::EnumSet;
-    use url::Url;
+    
 
     
 
@@ -48,25 +48,7 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     }
-    impl super::JSonSerializer for Url  {
-        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
-            let s  = self.as_str();
-            tgt.insert(n,serde_json::Value::String(s.to_string()));
 
-        }
-    }
-
-    impl super::JSonSerializer for Option<Url>  {
-        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
-            if self.is_some() {
-                let u : &Url  = self.as_ref().unwrap();
-                u.copy(n,tgt);
-//                let s  = u.as_str();
-//                tgt.insert(n,serde_json::Value::String(s.to_string()));
-
-            }
-        }
-    }
 
     impl super::JSonSerializer for Option<bool> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
@@ -124,26 +106,6 @@ pub (crate) mod JSONSerialzerHelpers {
             }
         }
     }
-    impl super::JSonSerializer for W3CList<Url> {
-        fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {
-            match self {
-                W3CList::List(ref list) => {
-                    let mut tmp = Vec::new();
-                    for u in list.iter() {
-                        tmp.push(u.to_string());
-                    }
-
-                    tgt.insert(n, serde_json::json!(tmp));
-                }
-                W3CList::Single(ref single) => {
-                    tgt.insert(n, serde_json::Value::String(single.to_string()));
-                }
-                W3CList::None => (),
-            }
-    
-        }
-    }
-
 
     impl super::JSonSerializer for W3CList<String> {
         fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>) {

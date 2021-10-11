@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use super::w3c_list::W3CList;
-use url::Url;
+//use url::String;
 use std::collections::btree_map::BTreeMap;
 use super::json_object::JSonObject;
 use super::json_object::JSonSerializer;
@@ -56,9 +56,9 @@ pub trait SecurityScheme :  Debug +  JSonObject + Sync + Send{
     ///1
     fn get_id(&self) -> SecuritySchemeId;
     ///1
-    fn get_proxy(&self) -> &Option<Url>;
+    fn get_proxy(&self) -> &Option<String>;
     ///1
-    fn set_proxy(&mut self, v : &Option<Url>);
+    fn set_proxy(&mut self, v : &Option<String>);
 }
 
 ///1
@@ -70,7 +70,7 @@ struct BaseSecurityScheme {
     descriptions : BTreeMap<String,String> ,
     stype        : W3CList<String>,
     id           : SecuritySchemeId,
-    proxy        : Option<Url>      
+    proxy        : Option<String>      
 
 }
 
@@ -119,11 +119,11 @@ impl SecurityScheme for BaseSecurityScheme {
         self.id.clone()
     }
     ///1
-    fn get_proxy(&self) -> &Option<Url> {
+    fn get_proxy(&self) -> &Option<String> {
         &self.proxy
     }
     ///1
-    fn set_proxy(&mut self, v : &Option<Url>) {
+    fn set_proxy(&mut self, v : &Option<String>) {
         self.proxy = v.clone();
     }
 
@@ -224,11 +224,11 @@ impl SecurityScheme for BaseBasicSecurityScheme {
         self.base.id.clone()
     }
     ///1
-    fn get_proxy(&self) -> &Option<Url> {
+    fn get_proxy(&self) -> &Option<String> {
         &self.base.proxy
     }
     ///1
-    fn set_proxy(&mut self, v : &Option<Url>) {
+    fn set_proxy(&mut self, v : &Option<String>) {
         self.base.proxy = v.clone();
     }
 
@@ -319,11 +319,11 @@ impl SecurityScheme for BaseDigestSecurityScheme {
         self.base.id.clone()
     }
     ///1
-    fn get_proxy(&self) -> &Option<Url> {
+    fn get_proxy(&self) -> &Option<String> {
         &self.base.proxy
     }
     ///1
-    fn set_proxy(&mut self, v : &Option<Url>) {
+    fn set_proxy(&mut self, v : &Option<String>) {
         self.base.proxy = v.clone();
     }
 

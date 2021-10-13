@@ -18,7 +18,7 @@ use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 //use serde_json;
 //use serde_json::json;
 use std::marker::{Send, Sync};
-use std::sync::{Arc };//, RwLock/*, Weak*/};
+use std::sync::{Arc , RwLock/*, Weak*/};
 use std::task::{Context, Poll};
 //use std::time::Duration;
 //use uuid::Uuid;
@@ -30,6 +30,10 @@ use super::objects::thing_object::ThingObject;
 use super::affordances::interaction_affordance::{InteractionAffordance};
 use super::affordances::property_affordance::{PropertyAffordance};
 use super::affordances::form::{Form, FormOperationType};
+use super::objects::property_object::PropertyObject;
+use super::objects::event_object::EventObject;
+use super::objects::action_object::ActionObject;
+
 use web::{Bytes, post, Query};
 //use super::affordances::thing_description::ThingDescription;
 const SERVICE_TYPE: &str = "_webthing._tcp";
@@ -122,7 +126,7 @@ where
 
 //        Either::Left(self.service.call(req))
         
-        let state = req.app_data::<web::Data<Arc<AppState>>>();
+        let state = req.app_data::<web::Data<Arc<RwLock<AppState>>>>();
 
         if state.is_none() {
             return Either::Right(ok(
@@ -134,7 +138,7 @@ where
 
         let host = req.headers().get("Host");
 
-        let res = state.validate_host(host);
+        let res = state.read().unwrap().validate_host(host);
 
         match res  {
             Ok(_) => Either::Left(self.service.call(req)),
@@ -163,7 +167,7 @@ pub struct ThingServer  {
     #[allow(dead_code)]
     ssl_options: Arc<Option<(String, String)>>,
     //app_state : Arc<RwLock<AppState>>
-    app_state : Arc<AppState>
+    app_state : Arc<RwLock<AppState>>
 
     //generator_arc: Arc<Box<dyn ActionGenerator>>,
 }
@@ -183,32 +187,32 @@ impl Clone for ThingServer {
     }
 }
 //event handling through plain GET/POST/PUT
-fn handle_get_event(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_get_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_event(req,state,"GET".to_string())
 }
-fn handle_post_event(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_post_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_event(req,state,"POST".to_string())
 }
-fn handle_put_event(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_put_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_event(req,state,"PUT".to_string())   
 }
 
-fn handle_event(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String) -> HttpResponse {
+fn handle_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
     HttpResponse::NotFound().finish()
 }
 //property handling through plain GET/POST/PUT
-fn handle_get_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+fn handle_get_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
     handle_property(req,state,"GET".to_string(), bytes)
 }
-fn handle_post_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+fn handle_post_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
     handle_property(req,state,"POST".to_string(), bytes)
 }
-fn handle_put_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+fn handle_put_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
     handle_property(req,state,"PUT".to_string(), bytes   )
 }
 
-fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String, bytes : Bytes) -> HttpResponse {
-    let mut app = Arc::get_mut(&mut state).unwrap();
+fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String, bytes : Bytes) -> HttpResponse {
+    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
     let u = req.path();
 
 
@@ -234,11 +238,11 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : S
     }
 
 
-    let mut  thing_obj = &s_thing_obj.unwrap();
+    let mut  thing_obj = &mut s_thing_obj.unwrap();
 
     //go into forms
 
-    let mut s_po = thing_obj.get_property_mut(obj_name);
+    let mut s_po : Option<&mut PropertyObject> =  thing_obj.get_property_mut(obj_name);
     
     if s_po.is_none() {
         return HttpResponse::NotFound().finish();
@@ -340,37 +344,37 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : S
     
 }
 //action handling through plain GET/POST/PUT
-fn handle_get_action(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_get_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_action(req,state,"GET".to_string())
 }
-fn handle_post_action(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_post_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_action(req,state,"POST".to_string())
 }
-fn handle_put_action(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_put_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_action(req,state,"PUT".to_string())        
 }
 
-fn handle_action(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String) -> HttpResponse {
+fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
     HttpResponse::NotFound().finish()
 }
 //root form handling through plain GET/POST/PUT
-fn handle_get_base_form(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_get_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_base_form(req,state,"GET".to_string())
 }
-fn handle_post_base_form(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_post_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_base_form(req,state,"POST".to_string())
 }
-fn handle_put_base_form(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
+fn handle_put_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
     handle_base_form(req,state,"PUT".to_string())        
 }
 
-fn handle_base_form(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String) -> HttpResponse {
+fn handle_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
     HttpResponse::NotFound().finish()
 }
 /// Handle websocket on /.
 async fn handle_ws_thing(
     req: HttpRequest,
-    state: web::Data<Arc<AppState>>,
+    state: web::Data<Arc<RwLock<AppState>>>,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
     Ok(HttpResponse::NotFound().finish())
@@ -422,24 +426,26 @@ impl ThingServer {
             ssl_options :   Arc::new(ssl_options),
             dns_service :   Arc::new(None),
             app_state   :   Arc::new( 
-                AppState { 
-                    things: objs,
-                    hosts: Vec::new(),
-                    disable_host_validation: disable_host_validation,
-                    registered_acts : BTreeMap::new(),
-                    registered_props : BTreeMap::new(),
-                    registered_evts: BTreeMap::new(),
-                    registered_base_forms : BTreeMap::new()
-                }  
+                RwLock::new(
+                    AppState { 
+                        things: objs,
+                        hosts: Vec::new(),
+                        disable_host_validation: disable_host_validation,
+                        registered_acts : BTreeMap::new(),
+                        registered_props : BTreeMap::new(),
+                        registered_evts: BTreeMap::new(),
+                        registered_base_forms : BTreeMap::new()
+                    }  
+                )
             )
         };
 
-        let app_state = Arc::get_mut(&mut ret.app_state).unwrap();
+        let mut app_state : &mut AppState = &mut ret.app_state.write().unwrap();
 
 
         //loads configured urls
-        for (s,to) in app_state.things.iter() {
-            let td = to.get_thing_description();
+        for (s,to) in  app_state.things.iter_mut() {
+            let mut td = &mut to.get_thing_description();
 
             for (n,p) in td.get_properties().iter() {
                 for f in p.get_forms().iter() {
@@ -474,7 +480,7 @@ impl ThingServer {
         }
 
 
-        ret
+        ret.clone()
     }
 
     ///1
@@ -549,7 +555,7 @@ impl ThingServer {
                         
 
             //register all routes
-            for (u,_t) in &app_state.registered_acts {
+            for (u,_t) in &app_state.read().unwrap().registered_acts {
                 let s = &u.to_string();
                 web_app_factory = web_app_factory.service(
                     web::resource(s)
@@ -560,7 +566,7 @@ impl ThingServer {
 
             }
 
-            for (u,_t) in &app_state.registered_props {
+            for (u,_t) in &app_state.read().unwrap().registered_props {
                 
                 let k : String  = u.to_string();
                 web_app_factory = web_app_factory.service(
@@ -572,7 +578,7 @@ impl ThingServer {
 
 
             }
-            for (u,_t) in &app_state.registered_evts {
+            for (u,_t) in &app_state.read().unwrap().registered_evts {
                 let s = &u.to_string();
                 web_app_factory = web_app_factory.service(
                     web::resource(s)
@@ -592,7 +598,7 @@ impl ThingServer {
 
             }
 
-            for (u,_t) in &app_state.registered_base_forms {
+            for (u,_t) in &app_state.read().unwrap().registered_base_forms {
                 let s = &u.to_string();
                 web_app_factory = web_app_factory.service(
                     web::resource(s)

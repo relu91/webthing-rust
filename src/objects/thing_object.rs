@@ -60,12 +60,11 @@ impl ThingObject {
     }
     
     ///1
-    pub fn add_property(
+    pub fn add_readonly_property(
         &mut self, 
         name    : &String, 
         desc    : &Option<String>,
         href    : &String,
-        id      : &Option<FormOperationType>,
         init_val: &Option<serde_json::Value>
     ) {
         let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
@@ -78,12 +77,10 @@ impl ThingObject {
 
         let mut frm  : Form = Form::new(href);
 
-        match id {
-            None => (),
-            Some(x) => frm.set_operation(*x),
-        }
+        frm.set_operation(FormOperationType::ReadProperty);
 
-        ppa.add_form(frm);
+        s_ref.add_form(frm);
+        s_ref.set_readonly(Some(true));
 
         let mut ppo = PropertyObject::new(name,pa.clone());
         ppo.set_value(init_val);
@@ -97,6 +94,78 @@ impl ThingObject {
 
 
     }
+    ///1
+    pub fn add_writeonly_property(
+        &mut self, 
+        name    : &String, 
+        desc    : &Option<String>,
+        href    : &String,
+        init_val: &Option<serde_json::Value>
+    ) {
+        let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
+        let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
+        let mut s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
+
+        PropertyAffordance::set_description(&mut *s_ref,desc);
+        PropertyAffordance::set_title(&mut *s_ref,&Some(name.clone()));
+
+
+        let mut frm  : Form = Form::new(href);
+
+        frm.set_operation(FormOperationType::WriteProperty);
+
+        s_ref.add_form(frm);
+        s_ref.set_writeonly(Some(true));
+
+        let mut ppo = PropertyObject::new(name,pa.clone());
+        ppo.set_value(init_val);
+
+        self.props.insert(name.to_string(),ppo);
+
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+
+        
+        td.add_property(name,pa.clone());
+
+
+    }
+    ///1
+    pub fn add_std_property(
+        &mut self, 
+        name    : &String, 
+        desc    : &Option<String>,
+        href    : &String,
+        init_val: &Option<serde_json::Value>
+    ) {
+        let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
+        let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
+        let mut s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
+
+        PropertyAffordance::set_description(&mut *s_ref,desc);
+        PropertyAffordance::set_title(&mut *s_ref,&Some(name.clone()));
+
+
+        let mut frm  : Form = Form::new(href);
+        frm.add_operation(FormOperationType::WriteProperty);
+        frm.add_operation(FormOperationType::ReadProperty);
+        s_ref.add_form(frm);
+        
+
+
+
+        let mut ppo = PropertyObject::new(name,pa.clone());
+        ppo.set_value(init_val);
+
+        self.props.insert(name.to_string(),ppo);
+
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+
+        
+        td.add_property(name,pa.clone());
+
+
+    }
+
     ///1
     pub fn  remove_property(&mut self, k : &String) {
         self.props.remove(k);

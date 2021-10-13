@@ -14,14 +14,23 @@ fn make_things() -> BTreeMap<String,ThingObject> {
 
     let mut to = ThingObject::new(&"/".to_string());
 
-    to.add_property(
-        &"name".to_string(),
+    to.add_readonly_property(
+        &"get_name".to_string(),
         &Some("A test property".to_string()),
-        &"/single/name".to_string(),
-        &Some(FormOperationType::ReadProperty),
+        &"/single/getName".to_string(),
         &Some(serde_json::Value::String("a value".to_string()))
 
     );
+    to.add_writeonly_property(
+        &"set_name".to_string(),
+        &Some("A test property".to_string()),
+        &"/single/setName".to_string(),
+        &Some(serde_json::Value::String("another value".to_string()))
+
+    );
+
+    //edits property
+
     
     ret.insert("THING".to_string(),to);
 

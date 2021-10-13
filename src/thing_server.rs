@@ -6,15 +6,19 @@ use actix_web::dev::{Server, ServiceRequest, ServiceResponse};
 use actix_web::guard;
 use actix_web::http::HeaderValue;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
-use actix_web_actors::ws;use futures::future::{ok, Either, Ready};
+//use actix_web_actors::ws;
+use futures::future::{ok, Either, Ready};
 use hostname;
 use libmdns;
+
+
+
 #[cfg(feature = "ssl")]
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 //use serde_json;
 //use serde_json::json;
 use std::marker::{Send, Sync};
-use std::sync::{Arc, RwLock/*, Weak*/};
+use std::sync::{Arc };//, RwLock/*, Weak*/};
 use std::task::{Context, Poll};
 //use std::time::Duration;
 //use uuid::Uuid;
@@ -26,7 +30,7 @@ use super::objects::thing_object::ThingObject;
 use super::affordances::interaction_affordance::{InteractionAffordance};
 use super::affordances::property_affordance::{PropertyAffordance};
 use super::affordances::form::{Form, FormOperationType};
-
+use web::{Bytes, post, Query};
 //use super::affordances::thing_description::ThingDescription;
 const SERVICE_TYPE: &str = "_webthing._tcp";
 
@@ -193,19 +197,21 @@ fn handle_event(req: HttpRequest, state: web::Data<Arc<AppState>>, method : Stri
     HttpResponse::NotFound().finish()
 }
 //property handling through plain GET/POST/PUT
-fn handle_get_property(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
-    handle_property(req,state,"GET".to_string())
+fn handle_get_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+    handle_property(req,state,"GET".to_string(), bytes)
 }
-fn handle_post_property(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
-    handle_property(req,state,"POST".to_string())
+fn handle_post_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+    handle_property(req,state,"POST".to_string(), bytes)
 }
-fn handle_put_property(req: HttpRequest, state: web::Data<Arc<AppState>>) -> HttpResponse {
-    handle_property(req,state,"PUT".to_string())   
+fn handle_put_property(req: HttpRequest, state: web::Data<Arc<AppState>>, bytes : Bytes) -> HttpResponse {
+    handle_property(req,state,"PUT".to_string(), bytes   )
 }
 
-fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String) -> HttpResponse {
-    let app = state.as_ref().clone();
+fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : String, bytes : Bytes) -> HttpResponse {
+    let mut app = Arc::get_mut(&mut state).unwrap();
     let u = req.path();
+
+
 
     if app.registered_props.contains_key(u) == false {
         return HttpResponse::NotFound().finish();
@@ -221,54 +227,56 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : S
     let thing_name : &String = &thing_info.thing_name;
     let obj_name : &String = &thing_info.object_name;
 
-    let s_thing_obj = app.things.get(thing_name);
+    let mut s_thing_obj = app.things.get_mut(thing_name);
 
     if s_thing_obj.is_none() {
         return HttpResponse::NotFound().finish();
     }
 
 
-    let thing_obj = &s_thing_obj.unwrap();
+    let mut  thing_obj = &s_thing_obj.unwrap();
 
     //go into forms
 
-    let s_po = thing_obj.get_property(obj_name);
+    let mut s_po = thing_obj.get_property_mut(obj_name);
     
     if s_po.is_none() {
         return HttpResponse::NotFound().finish();
     }
 
-    let po = s_po.unwrap();
+    let mut po = s_po.unwrap();
 
     let def = po.get_definition();
 
-    let mut thisMethod  : Option<String> = None;
+    let mut this_method  : Option<String> = None;
     let mut opid : Option<FormOperationType> = None;
-    let mut thisForm : Option<&Form> = None;
+    let mut this_form : Option<&Form> = None;
 
     let mut found : bool = false;
 
     for f in def.get_forms() {
-        let thisPath = f.get_href().to_string();
-        if thisPath == u {
-            thisMethod = f.get_method_name().clone();
-            if thisMethod.is_none() {
-                let opList = f.get_operation_list();
-                if opList.len() > 0 {
-                    let opid = opList.iter().next().unwrap();
-                    match opid {
-                        FormOperationType::ReadProperty => thisMethod = Some("GET".to_string()),
-                        FormOperationType::WriteProperty => thisMethod = Some("PUT".to_string()),
+        let this_path = f.get_href().to_string();
+        if this_path == u {
+            this_method = f.get_method_name().clone();
+            if this_method.is_none() {
+                let op_list = f.get_operation_list();
+                if op_list.len() > 0 {
+                    let zopid = op_list.iter().next().unwrap();
+                    match zopid {
+                        FormOperationType::ReadProperty => this_method = Some("GET".to_string()),
+                        FormOperationType::WriteProperty => this_method = Some("PUT".to_string()),
                         _ => ()
                     }
+                    opid = Some(zopid);
+                    
 
 
                 }
             }
 
-            if thisMethod.is_some() && thisMethod.unwrap() == method {
+            if this_method.is_some() && this_method.unwrap() == method {
                 found = true;
-                thisForm = Some(&f);
+                this_form = Some(&f);
                 break;
             }
 
@@ -280,10 +288,42 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<AppState>>, method : S
     }
 
     //now, do some access checking
+    let mut ro : bool = false;
+    let mut wo : bool = false;
 
-
+    match def.get_readonly()  {
+        None => ro = false,
+        Some(x) => ro = x,
+    }
+    match def.get_writeonly()  {
+        None => wo = false,
+        Some(x) => wo = x,
+    }
+    
+    if opid.is_some() {
+        if (opid.unwrap() == FormOperationType::WriteProperty && ro == true) ||
+            (opid.unwrap() == FormOperationType::ReadProperty && wo == true ) {
+            return HttpResponse::Forbidden().finish();
+        }
+    }
 
     //eventually build response
+    if opid.unwrap() ==  FormOperationType::WriteProperty {
+        let bodyRes = String::from_utf8(bytes.to_vec());
+        if bodyRes.is_err() {
+            return HttpResponse::BadRequest().finish();
+        }
+        let body = bodyRes.unwrap();
+        
+        let parsed  : serde_json::Value = serde_json::from_str(&body).expect("JSON was not well-formatted");
+
+        po.set_value(&Some(parsed));
+
+
+
+
+    }
+    
     let value = po.get_value();
     let mut ret = serde_json::Map::new();
     

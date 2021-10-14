@@ -1,31 +1,28 @@
 use actix;
-//use actix::prelude::*;
+use actix::prelude::*;
 use actix_service::{Service, Transform};
 use actix_web;
 use actix_web::dev::{Server, ServiceRequest, ServiceResponse};
 use actix_web::guard;
 use actix_web::http::HeaderValue;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
-//use actix_web_actors::ws;
+use actix_web_actors::ws;
+
+
 use futures::future::{ok, Either, Ready};
 use hostname;
 use libmdns;
-
+use uuid::Uuid;
 
 
 #[cfg(feature = "ssl")]
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-//use serde_json;
-//use serde_json::json;
 use std::marker::{Send, Sync};
 use std::sync::{Arc , RwLock/*, Weak*/};
 use std::task::{Context, Poll};
-//use std::time::Duration;
-//use uuid::Uuid;
 use std::clone::Clone;
-//use std::collections::BTreeSet;
 use std::collections::BTreeMap;
-//use url::String;
+
 use super::objects::thing_object::ThingObject;
 use super::affordances::interaction_affordance::{InteractionAffordance};
 use super::affordances::property_affordance::{PropertyAffordance};
@@ -33,6 +30,9 @@ use super::affordances::form::{Form, FormOperationType};
 use super::objects::property_object::PropertyObject;
 use super::objects::event_object::EventObject;
 use super::objects::action_object::ActionObject;
+use super::objects::notifiable_object::NotifiableObject;
+use super::objects::observable_object::ObservableObject;
+
 
 use web::{Bytes, post, Query};
 //use super::affordances::thing_description::ThingDescription;
@@ -186,20 +186,6 @@ impl Clone for ThingServer {
         }
     }
 }
-//event handling through plain GET/POST/PUT
-fn handle_get_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_event(req,state,"GET".to_string())
-}
-fn handle_post_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_event(req,state,"POST".to_string())
-}
-fn handle_put_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_event(req,state,"PUT".to_string())   
-}
-
-fn handle_event(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
-    HttpResponse::NotFound().finish()
-}
 //property handling through plain GET/POST/PUT
 fn handle_get_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
     handle_property(req,state,"GET".to_string(), bytes)
@@ -251,6 +237,10 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
     let mut po = s_po.unwrap();
 
     let def = po.get_definition();
+    //do some access checking
+
+    
+
 
     let mut this_method  : Option<String> = None;
     let mut opid : Option<FormOperationType> = None;
@@ -344,18 +334,93 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
     
 }
 //action handling through plain GET/POST/PUT
-fn handle_get_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_action(req,state,"GET".to_string())
+fn handle_get_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
+    handle_action(req,state,"GET".to_string(),bytes)
 }
-fn handle_post_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_action(req,state,"POST".to_string())
+fn handle_post_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
+    handle_action(req,state,"POST".to_string(),bytes)
 }
-fn handle_put_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
-    handle_action(req,state,"PUT".to_string())        
+fn handle_put_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, bytes : Bytes) -> HttpResponse {
+    handle_action(req,state,"PUT".to_string(),bytes)        
 }
 
-fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
-    HttpResponse::NotFound().finish()
+fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String, bytes : Bytes) -> HttpResponse {
+    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
+    let u = req.path();
+
+
+
+    if app.registered_acts.contains_key(u) == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    
+    let r  = app.registered_acts.get(u);
+    if r.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+    let thing_info = r.unwrap();
+    
+    let thing_name : &String = &thing_info.thing_name;
+    let obj_name : &String = &thing_info.object_name;
+
+    let mut s_thing_obj = app.things.get_mut(thing_name);
+
+    if s_thing_obj.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+
+    let mut  thing_obj = &mut s_thing_obj.unwrap();
+
+    //go into forms
+
+    let mut s_po : Option<&mut ActionObject> =  thing_obj.get_action_mut(obj_name);
+    
+    if s_po.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+    let mut po = s_po.unwrap();
+
+    let def = po.get_definition();
+    //do some access checking
+
+    
+
+
+    let mut this_method  : Option<String> = None;
+    let mut opid : Option<FormOperationType> = None;
+    let mut this_form : Option<&Form> = None;
+
+    let mut found : bool = false;
+
+    for f in def.get_forms() {
+        let this_path = f.get_href().to_string();
+        if this_path == u {
+            this_method = f.get_method_name().clone();
+            if this_method.is_none() {
+                this_method = Some("POST".to_string());
+            }
+
+            if this_method.is_some() && this_method.unwrap() == method {
+                found = true;
+                this_form = Some(&f);
+                break;
+            }
+
+        }
+    }
+
+    if found == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    //try to do something
+    po.handle();
+
+    HttpResponse::Ok().finish()
+
 }
 //root form handling through plain GET/POST/PUT
 fn handle_get_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>) -> HttpResponse {
@@ -377,34 +442,68 @@ async fn handle_ws_thing(
     state: web::Data<Arc<RwLock<AppState>>>,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::NotFound().finish())
-/*    
-    let u = req.
-    u.to_ur
-    if state.registered_evts
-*/
-/*    
+
+    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
+    let u = req.path();
+
+
+
+    if app.registered_evts.contains_key(u) == false {
+        return Ok(HttpResponse::NotFound().finish());
+    }
+
+    
+    let r  = app.registered_acts.get(u);
+    if r.is_none() {
+        return Ok(HttpResponse::NotFound().finish());
+    }
+    let thing_info = r.unwrap();
+    
+    let thing_name : &String = &thing_info.thing_name;
+    let obj_name : &String = &thing_info.object_name;
+
+    let mut s_thing_obj = app.things.get_mut(thing_name);
+
+    if s_thing_obj.is_none() {
+        return Ok(HttpResponse::NotFound().finish());
+    }
+
+
+    let mut  thing_obj = &mut s_thing_obj.unwrap();
+
+    //go into forms
+
+    let mut s_po : Option<&mut EventObject> =  thing_obj.get_event_mut(obj_name);
+    
+    if s_po.is_none() {
+        return Ok(HttpResponse::NotFound().finish());
+    }
+
+    let mut po = s_po.unwrap();
+
+    let def = po.get_definition();
+
     let thing_id = req.match_info().get("thing_id");
 
-    match state.get_thing(thing_id) {
-        None => Ok(HttpResponse::NotFound().finish()),
-        Some(thing) => {
-            let thing_id = match thing_id {
-                None => 0,
-                Some(id) => id.parse::<usize>().unwrap(),
-            };
-            let ws = ThingWebSocket {
-                id: Uuid::new_v4().to_string(),
-                thing_id: thing_id,
-                things: state.get_things(),
-                action_generator: state.get_action_generator(),
-            };
-            thing.write().unwrap().add_subscriber(ws.get_id());
-            ws::start(ws, &req, stream)
-        }
-    
-    }
-*/    
+    let thing_id = match thing_id {
+        None => 0,
+        Some(id) => id.parse::<usize>().unwrap(),
+    };
+    let ws = ThingWebSocket {
+        id: Uuid::new_v4().to_string(),
+        thing_id: thing_id,
+        thing_name : thing_info.thing_name.clone(),
+        object_name : thing_info.object_name.clone(),
+        app_state : state.as_ref().clone(),
+        url : u.to_string().clone()
+    };
+
+    po.add_subscriber(&ws.get_id());
+
+    ws::start(ws, &req, stream)
+
+
+
 }    
 
 impl ThingServer {
@@ -536,7 +635,8 @@ impl ThingServer {
                             "Access-Control-Allow-Headers",
                             "Origin, Content-Type, Accept, X-Requested-With",
                         ),
-            );
+                ) ;
+
     
 /*    
 
@@ -582,9 +682,9 @@ impl ThingServer {
                 let s = &u.to_string();
                 web_app_factory = web_app_factory.service(
                     web::resource(s)
-                    .route(web::get().to(handle_get_event))
-                    .route(web::put().to(handle_put_event))
-                    .route( web::post().to(handle_post_event))
+                    //.route(web::get().to(handle_get_event))
+                    //.route(web::put().to(handle_put_event))
+                    //.route( web::post().to(handle_post_event))
                     .route(
                         web::route()
                             .guard(guard::Get())
@@ -665,3 +765,59 @@ impl ThingServer {
     }
 }
 
+// WEB SOCKET HANDLING
+
+struct ThingWebSocket {
+    id: String,
+    thing_id: usize,
+    thing_name: String,
+    object_name : String,
+    url : String,
+    app_state: Arc<RwLock<AppState>>
+    
+}
+
+impl Actor for ThingWebSocket {
+    type Context = ws::WebsocketContext<Self>;
+}
+
+impl ThingWebSocket {
+    /// Get the ID of this websocket.
+    fn get_id(&self) -> String {
+        self.id.clone()
+    }
+}
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
+    fn started(&mut self, ctx: &mut Self::Context) {
+        //self.drain_queue(ctx);
+    }
+
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        match msg {
+            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+            Ok(ws::Message::Pong(_)) => (),
+            Ok(ws::Message::Text(text)) => (),
+            Ok(ws::Message::Close(_)) => {
+                let mut app_state : &mut AppState = &mut self.app_state.write().unwrap();
+                
+                //first, removes url
+                app_state.registered_evts.remove(&self.url);
+                //next, removes listener from event
+                let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                    None => return ,
+                    Some(x) =>  x
+                };
+
+                let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
+                    None => return,
+                    Some(x) => x
+                };
+
+                event.remove_subscriber(&self.id);
+
+            }
+            _ => (),
+        }
+    }    
+
+}

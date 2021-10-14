@@ -47,11 +47,11 @@ impl PropertyObject {
 }
 
 impl ObservableObject for PropertyObject {
-    fn remove_subscriber(&mut self,ws_id: String) {
-        self.subs.remove(&ws_id);
+    fn remove_subscriber(&mut self,ws_id: &String) {
+        self.subs.remove(ws_id);
     }
-    fn add_subscriber(&mut self,ws_id: String) {
-        self.subs.insert(ws_id);
+    fn add_subscriber(&mut self,ws_id: &String) {
+        self.subs.insert(ws_id.clone());
 
     }
     fn get_subscribers(&self) -> &BTreeSet<String> {

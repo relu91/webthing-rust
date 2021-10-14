@@ -31,6 +31,11 @@ impl EventObject {
             owner: o
         }
     }
+    ///1
+    pub fn get_definition(&self) -> &Box<dyn EventAffordance> {
+        &self.def
+    }
+
 }
 
 impl NotifiableObject for EventObject {
@@ -40,11 +45,11 @@ impl NotifiableObject for EventObject {
 }
 
 impl ObservableObject for EventObject {
-    fn remove_subscriber(&mut self,ws_id: String) {
-        self.subs.remove(&ws_id);
+    fn remove_subscriber(&mut self,ws_id: &String) {
+        self.subs.remove(ws_id);
     }
-    fn add_subscriber(&mut self,ws_id: String) {
-        self.subs.insert(ws_id);
+    fn add_subscriber(&mut self,ws_id: &String) {
+        self.subs.insert(ws_id.clone());
 
     }
     fn get_subscribers(&self) -> &BTreeSet<String> {

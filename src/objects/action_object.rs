@@ -31,6 +31,12 @@ impl ActionObject {
        
         self.handler.clone().handle(&mut *self);
     }
+
+    ///1
+    pub fn get_definition(&self) -> &Box<dyn ActionAffordance> {
+        &self.def
+    }
+
 }
 ///1
 pub trait ActionHandlerTrait {

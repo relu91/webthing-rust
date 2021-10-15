@@ -31,8 +31,7 @@ pub use thing::{BaseThing, Thing};
 */
 ///1
 pub mod thing_server;
-///1
-pub mod thing_web_socket;
+
 
 ///Expected response data
 pub mod affordances;

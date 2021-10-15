@@ -443,7 +443,7 @@ async fn handle_ws_thing(
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
 
-    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
+    let app : &mut AppState = &mut state.as_ref().write().unwrap();
     let u = req.path();
 
 
@@ -786,9 +786,49 @@ impl ThingWebSocket {
     fn get_id(&self) -> String {
         self.id.clone()
     }
+
+
+    fn remove_subscriber(&mut self) {
+         
+        let mut app_state : &mut AppState = &mut self.app_state.write().unwrap();
+
+        let u : &String = &mut self.url.clone();
+
+        if app_state.registered_props.contains_key(u) {
+            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                None => return ,
+                Some(x) =>  x
+            };
+    
+            let property : &mut PropertyObject = match thing.get_property_mut(&self.object_name) {
+                None => return,
+                Some(x) => x
+            };
+    
+            property.remove_subscriber(&self.id);
+    
+        }
+
+        if app_state.registered_evts.contains_key(u) {
+            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                None => return ,
+                Some(x) =>  x
+            };
+    
+            let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
+                None => return,
+                Some(x) => x
+            };
+    
+            event.remove_subscriber(&self.id);
+    
+        }
+
+    }
+
 }
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
-    fn started(&mut self, ctx: &mut Self::Context) {
+    fn started(&mut self, _ctx: &mut Self::Context) {
         //self.drain_queue(ctx);
     }
 
@@ -796,25 +836,61 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
             Ok(ws::Message::Pong(_)) => (),
-            Ok(ws::Message::Text(text)) => (),
-            Ok(ws::Message::Close(_)) => {
-                let mut app_state : &mut AppState = &mut self.app_state.write().unwrap();
+            Ok(ws::Message::Text(text)) => {
+                let parsed_res : Result<serde_json::Value, serde_json::Error> = serde_json::from_str(&text);
+                if parsed_res.is_ok() {
+                    let parsed  = parsed_res.unwrap();
+                    let opt_type = parsed.get("type");
+
+                    let mut type_str = "";
+
+                    if opt_type.is_some() {
+                        let v = opt_type.unwrap();
+                        if v.is_string() {
+                            type_str = v.as_str().unwrap().clone();
+                        }                        
+                    }
+
+                    if type_str == "unobserveproperty" {
+                        let lr = &mut self.app_state.write();
+                        {
+                            let app_state : &mut AppState = &mut  lr.as_deref_mut().unwrap();
+
+                            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                                None => return ,
+                                Some(x) =>  x
+                            };
+                    
+                            let prop : &mut PropertyObject = match thing.get_property_mut(&self.object_name) {
+                                None => return,
+                                Some(x) => x
+                            };
+                    
+                            prop.remove_subscriber(&self.id);
+                    
+                            //self.remove_property(&mut app_state);
+                        }
+                    }
+
+                    if type_str == "unsubscribeevent" {
+                        let app_state : &mut AppState = &mut self.app_state.write().unwrap();
+                        let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                            None => return ,
+                            Some(x) =>  x
+                        };
+
+                        let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
+                            None => return,
+                            Some(x) => x
+                        };
+
+                    }
+                }
                 
-                //first, removes url
-                app_state.registered_evts.remove(&self.url);
-                //next, removes listener from event
-                let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
-                    None => return ,
-                    Some(x) =>  x
-                };
 
-                let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
-                    None => return,
-                    Some(x) => x
-                };
-
-                event.remove_subscriber(&self.id);
-
+            }
+            Ok(ws::Message::Close(_)) => {
+                self.remove_subscriber();
             }
             _ => (),
         }

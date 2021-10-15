@@ -29,9 +29,24 @@ fn make_things() -> BTreeMap<String,ThingObject> {
 
     );
 
-    //edits property
+    //create evemt
+    to.add_event(
+        &"an_event".to_string(),
+        &Some("An Event".to_string()),
+        &"/single/anEvent".to_string(),
+        &None
+    );
 
-    
+    //creates action
+/*    
+    to.add_action(
+        &"an_event".to_string(),
+        &Some("An Event".to_string()),
+        &"/single/anEvent".to_string(),
+        &None
+
+    );
+*/    
     ret.insert("THING".to_string(),to);
 
     ret

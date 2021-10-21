@@ -11,3 +11,5 @@ pub mod thing_object;
 pub mod observable_object;
 ///1
 pub mod notifiable_object;
+///1
+pub mod thing_helpers;

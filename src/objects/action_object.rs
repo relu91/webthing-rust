@@ -1,6 +1,8 @@
 use super::super::affordances::action_affordance::ActionAffordance;
-use std::sync::Arc;
+use std::sync::{Arc,Weak,RwLock};
+use std::cell::RefCell;
 use super::thing_object::ThingObject;
+
 
 ///1
 pub struct ActionObject {
@@ -10,7 +12,7 @@ pub struct ActionObject {
   name: String ,
 
   ///1
-  owner : * mut ThingObject,
+  owner : RefCell<Weak<RwLock<ThingObject>>>,
     
   ///1
   handler : Arc<Box< dyn ActionHandlerTrait>>
@@ -18,13 +20,17 @@ pub struct ActionObject {
 
 impl ActionObject {
     ///1
-    pub fn new(n: &String, pa : Arc<Box<dyn ActionAffordance>>, o: *mut  ThingObject, h :  Arc<Box< dyn ActionHandlerTrait>>) -> Self {
-        ActionObject{
+    pub fn new(n: &String, pa : Arc<Box<dyn ActionAffordance>>, o: Arc<RwLock<ThingObject>>, h :  Arc<Box< dyn ActionHandlerTrait>>) -> Self {
+        let ret = ActionObject{
             def : pa,
             name : n.to_string(),
-            owner: o,
+            owner: RefCell::new(Weak::new()),
             handler : h
-        }
+        };
+
+        *ret.owner.borrow_mut() = Arc::downgrade(&o);
+
+        ret
     }
     ///1
     pub fn handle(&mut self) {

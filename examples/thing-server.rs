@@ -1,27 +1,34 @@
 
 use actix_rt;
 use std::collections::BTreeMap;
+use std::sync::{Arc,RwLock};
+
 //use url::String;
 
 use webthing::{
     thing_server::ThingServer, 
     ThingObject, 
-    FormOperationType
+    FormOperationType,
+    ThingHelpers,
 };
 
-fn make_things() -> BTreeMap<String,ThingObject> {
+fn make_things() -> BTreeMap<String,Arc<RwLock<ThingObject>>> {
     let mut ret = BTreeMap::new();
 
-    let mut to = ThingObject::new(&"/".to_string());
+    let to = Arc::new(RwLock::new(ThingObject::new(&"/".to_string())));
 
-    to.add_readonly_property(
+    
+    ThingHelpers::add_readonly_property(
+        to.clone(),
         &"get_name".to_string(),
         &Some("A test property".to_string()),
         &"/single/getName".to_string(),
         &Some(serde_json::Value::String("a value".to_string()))
 
     );
-    to.add_writeonly_property(
+    
+    ThingHelpers::add_writeonly_property(
+        to,
         &"set_name".to_string(),
         &Some("A test property".to_string()),
         &"/single/setName".to_string(),
@@ -30,7 +37,8 @@ fn make_things() -> BTreeMap<String,ThingObject> {
     );
 
     //create evemt
-    to.add_event(
+    ThingHelpers::add_event(
+        to,
         &"an_event".to_string(),
         &Some("An Event".to_string()),
         &"/single/anEvent".to_string(),
@@ -47,7 +55,7 @@ fn make_things() -> BTreeMap<String,ThingObject> {
 
     );
 */    
-    ret.insert("THING".to_string(),to);
+    ret.insert("THING".to_string(),to.clone());
 
     ret
 }

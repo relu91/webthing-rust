@@ -7,4 +7,8 @@ pub trait ObservableObject {
     fn remove_subscriber(&mut self,ws_id: &String);
     ///1
     fn get_subscribers(&self) -> &BTreeSet<String>;
+
+    ///1
+    fn get_subscribers_mut(&mut self) -> &mut BTreeSet<String>;
+
 }

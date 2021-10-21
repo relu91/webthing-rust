@@ -1,7 +1,10 @@
 use std::collections::BTreeSet;
 use super::super::affordances::property_affordance::PropertyAffordance;
 use super::observable_object::ObservableObject;
-use std::sync::Arc;
+use std::sync::{Arc,Weak,RwLock};
+use std::cell::RefCell;
+use super::thing_object::ThingObject;
+use std::collections::BTreeMap;
 
 ///used for base property implementation 
 pub struct PropertyObject  {
@@ -12,19 +15,29 @@ pub struct PropertyObject  {
     ///1
     name: String ,
     ///1
-    subs: BTreeSet<String>
+    subs: BTreeSet<String>,
+    ///1
+    owner : RefCell<Weak<RwLock<ThingObject>>>,
+    ///1
+    messages : BTreeMap<String, Vec<String>>
 }
 
 
 impl PropertyObject {
     ///1
-    pub fn new(n: &String, pa : Arc<Box<dyn PropertyAffordance>>) -> Self {
-        PropertyObject {
+    pub fn new(n: &String,o: Arc<RwLock<ThingObject>>, pa : Arc<Box<dyn PropertyAffordance>>) -> Self {
+        let ret = PropertyObject {
             def : pa,
             val : None,
             name : n.clone(),
-            subs : BTreeSet::new()
-        }
+            subs : BTreeSet::new(),
+            owner : RefCell::new(Weak::new()),
+            messages : BTreeMap::new()
+        };
+
+        *ret.owner.borrow_mut() = Arc::downgrade(&o);
+
+        ret
     }
     ///1
     pub fn  get_value(&self) -> &Option<serde_json::Value> {
@@ -35,9 +48,6 @@ impl PropertyObject {
         self.val = v.clone();
 
         
-        for ws_id in self.subs.iter() {
-
-        }
 
     }
     ///1
@@ -56,6 +66,9 @@ impl ObservableObject for PropertyObject {
     }
     fn get_subscribers(&self) -> &BTreeSet<String> {
         &self.subs
+    }
+    fn get_subscribers_mut(&mut self) -> &mut BTreeSet<String> {
+        &mut self.subs
     }
 
 }

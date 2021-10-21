@@ -8,6 +8,7 @@ use actix_web::http::HeaderValue;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
+use std::time::Duration;
 
 use futures::future::{ok, Either, Ready};
 use hostname;
@@ -18,14 +19,14 @@ use uuid::Uuid;
 #[cfg(feature = "ssl")]
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use std::marker::{Send, Sync};
-use std::sync::{Arc , RwLock/*, Weak*/};
+use std::sync::{Arc , RwLock,Weak};
 use std::task::{Context, Poll};
 use std::clone::Clone;
 use std::collections::BTreeMap;
 
 use super::objects::thing_object::ThingObject;
 use super::affordances::interaction_affordance::{InteractionAffordance};
-use super::affordances::property_affordance::{PropertyAffordance};
+//use super::affordances::property_affordance::{PropertyAffordance};
 use super::affordances::form::{Form, FormOperationType};
 use super::objects::property_object::PropertyObject;
 use super::objects::event_object::EventObject;
@@ -53,7 +54,7 @@ impl ThingEndpointInfo {
 }
 
 struct AppState {
-    things                  : BTreeMap<String, ThingObject>,
+    things                  : BTreeMap<String, Arc<RwLock<ThingObject>>>,
     hosts                   : Vec<String>,
     disable_host_validation: bool,
     registered_props        : BTreeMap<String,ThingEndpointInfo>,
@@ -217,18 +218,19 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
     let thing_name : &String = &thing_info.thing_name;
     let obj_name : &String = &thing_info.object_name;
 
-    let mut s_thing_obj = app.things.get_mut(thing_name);
+    let  s_thing_obj = app.things.get_mut(thing_name);
 
     if s_thing_obj.is_none() {
         return HttpResponse::NotFound().finish();
     }
 
 
-    let mut  thing_obj = &mut s_thing_obj.unwrap();
+    let  w_thing_obj = &mut s_thing_obj.unwrap();
 
     //go into forms
 
-    let mut s_po : Option<&mut PropertyObject> =  thing_obj.get_property_mut(obj_name);
+    let mut thing_obj =  w_thing_obj.write().unwrap();
+    let s_po : Option<&mut PropertyObject> =  thing_obj.get_property_mut(obj_name);
     
     if s_po.is_none() {
         return HttpResponse::NotFound().finish();
@@ -364,18 +366,19 @@ fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, meth
     let thing_name : &String = &thing_info.thing_name;
     let obj_name : &String = &thing_info.object_name;
 
-    let mut s_thing_obj = app.things.get_mut(thing_name);
+    let     s_thing_obj = app.things.get_mut(thing_name);
 
     if s_thing_obj.is_none() {
         return HttpResponse::NotFound().finish();
     }
 
 
-    let mut  thing_obj = &mut s_thing_obj.unwrap();
+    let      w_thing_obj = &mut s_thing_obj.unwrap();
+    let mut  thing_obj = w_thing_obj.write().unwrap();
 
     //go into forms
-
-    let mut s_po : Option<&mut ActionObject> =  thing_obj.get_action_mut(obj_name);
+    
+    let  s_po : Option<&mut ActionObject> =  thing_obj.get_action_mut(obj_name);
     
     if s_po.is_none() {
         return HttpResponse::NotFound().finish();
@@ -462,18 +465,18 @@ async fn handle_ws_thing(
     let thing_name : &String = &thing_info.thing_name;
     let obj_name : &String = &thing_info.object_name;
 
-    let mut s_thing_obj = app.things.get_mut(thing_name);
+    let s_thing_obj = app.things.get_mut(thing_name);
 
     if s_thing_obj.is_none() {
         return Ok(HttpResponse::NotFound().finish());
     }
 
 
-    let mut  thing_obj = &mut s_thing_obj.unwrap();
-
+    let  thing_obj = &mut s_thing_obj.unwrap();
+    let mut to = thing_obj.write().unwrap();
     //go into forms
 
-    let mut s_po : Option<&mut EventObject> =  thing_obj.get_event_mut(obj_name);
+    let s_po : Option<&mut EventObject> =  to.get_event_mut(obj_name);
     
     if s_po.is_none() {
         return Ok(HttpResponse::NotFound().finish());
@@ -498,7 +501,7 @@ async fn handle_ws_thing(
         url : u.to_string().clone()
     };
 
-    po.add_subscriber(&ws.get_id());
+    
 
     ws::start(ws, &req, stream)
 
@@ -516,7 +519,7 @@ impl ThingServer {
         hostname:   Option<String>,
         #[allow(dead_code)]
         ssl_options: Option<(String, String)>,
-        objs       : BTreeMap<String, ThingObject>
+        objs       : BTreeMap<String, Arc<RwLock<ThingObject>>>
     ) -> Self {
         let mut  ret = ThingServer {
             base_path   :   Arc::new(base_path),
@@ -543,8 +546,9 @@ impl ThingServer {
 
 
         //loads configured urls
+        
         for (s,to) in  app_state.things.iter_mut() {
-            let mut td = &mut to.get_thing_description();
+            let mut td = &mut to.write().unwrap().get_thing_description();
 
             for (n,p) in td.get_properties().iter() {
                 for f in p.get_forms().iter() {
@@ -766,8 +770,8 @@ impl ThingServer {
 }
 
 // WEB SOCKET HANDLING
-
-struct ThingWebSocket {
+///1
+pub struct ThingWebSocket {
     id: String,
     thing_id: usize,
     thing_name: String,
@@ -782,6 +786,34 @@ impl Actor for ThingWebSocket {
 }
 
 impl ThingWebSocket {
+    /// Drain all message queues associated with this websocket.
+    fn drain_queue(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        let name = self.thing_name.clone();
+        let object_name = self.object_name.clone();
+        
+
+        ctx.run_later(Duration::from_millis(200), move |act, ctx| {
+            let s_appstate = act.app_state.clone();
+            let appstate = s_appstate.write().unwrap();
+            let mut thing = appstate.things.get(&name).unwrap().write().unwrap();
+
+            let mut evt : &EventObject = thing.get_event_mut(&object_name).unwrap();
+            
+
+            //let mut thing = thing.write().unwrap();
+
+            let drains = thing.drain_queue(act.get_id(),&object_name);
+            for iter in drains {
+                for message in iter {
+                    ctx.text(message);
+                }
+            }
+
+            act.drain_queue(ctx);
+        });
+    }
+    
+
     /// Get the ID of this websocket.
     fn get_id(&self) -> String {
         self.id.clone()
@@ -795,11 +827,13 @@ impl ThingWebSocket {
         let u : &String = &mut self.url.clone();
 
         if app_state.registered_props.contains_key(u) {
-            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+            let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
                 None => return ,
-                Some(x) =>  x
+                Some(x) =>  x.clone()
             };
-    
+   
+            let thing : &mut ThingObject = &mut a_thing.write().unwrap();
+
             let property : &mut PropertyObject = match thing.get_property_mut(&self.object_name) {
                 None => return,
                 Some(x) => x
@@ -810,11 +844,13 @@ impl ThingWebSocket {
         }
 
         if app_state.registered_evts.contains_key(u) {
-            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+
+            let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
                 None => return ,
-                Some(x) =>  x
+                Some(x) =>  x.clone()
             };
-    
+   
+            let thing : &mut ThingObject = &mut a_thing.write().unwrap();    
             let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
                 None => return,
                 Some(x) => x
@@ -828,8 +864,8 @@ impl ThingWebSocket {
 
 }
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        //self.drain_queue(ctx);
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.drain_queue(ctx);
     }
 
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
@@ -851,16 +887,54 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
                         }                        
                     }
 
+                    if type_str == "subscribeevent" {
+                        let app_state : &mut AppState = &mut self.app_state.write().unwrap();
+                        let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
+                            None => return ,
+                            Some(x) =>  x.clone()
+                        };
+               
+                        let thing : &mut ThingObject = &mut a_thing.write().unwrap();
+
+                        let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
+                            None => return,
+                            Some(x) => x
+                        };
+
+                        event.add_subscriber(&self.id);
+
+                    }
+                    if type_str == "observeproperty"  {
+                        let lr = &mut self.app_state.write();
+                        let app_state : &mut AppState = &mut  lr.as_deref_mut().unwrap();
+
+                        let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
+                            None => return ,
+                            Some(x) =>  x.clone()
+                        };
+               
+                        let thing : &mut ThingObject = &mut a_thing.write().unwrap();
+                    
+                        let prop : &mut PropertyObject = match thing.get_property_mut(&self.object_name) {
+                            None => return,
+                            Some(x) => x
+                        };
+                
+                        prop.add_subscriber(&self.id);
+
+                    }
                     if type_str == "unobserveproperty" {
                         let lr = &mut self.app_state.write();
                         {
                             let app_state : &mut AppState = &mut  lr.as_deref_mut().unwrap();
 
-                            let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                            let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
                                 None => return ,
-                                Some(x) =>  x
+                                Some(x) =>  x.clone()
                             };
-                    
+                   
+                            let thing : &mut ThingObject = &mut a_thing.write().unwrap();
+                        
                             let prop : &mut PropertyObject = match thing.get_property_mut(&self.object_name) {
                                 None => return,
                                 Some(x) => x
@@ -874,15 +948,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
 
                     if type_str == "unsubscribeevent" {
                         let app_state : &mut AppState = &mut self.app_state.write().unwrap();
-                        let thing : &mut ThingObject  = match app_state.things.get_mut(&self.thing_name) {
+                        
+                        let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
                             None => return ,
-                            Some(x) =>  x
+                            Some(x) =>  x.clone()
                         };
+               
+                        let thing : &mut ThingObject = &mut a_thing.write().unwrap();
+
 
                         let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
                             None => return,
                             Some(x) => x
                         };
+
+                        event.remove_subscriber(&self.id);
 
                     }
                 }

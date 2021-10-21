@@ -33,6 +33,7 @@ pub use thing::{BaseThing, Thing};
 pub mod thing_server;
 
 
+
 ///Expected response data
 pub mod affordances;
 ///1
@@ -51,6 +52,9 @@ pub use objects::thing_object::ThingObject;
 pub use objects::action_object::{ ActionObject, ActionHandlerTrait};
 pub use objects::event_object::EventObject;
 pub use objects::property_object::PropertyObject;
+
+pub use objects::thing_helpers::ThingHelpers;
+
 
 
 

@@ -1,7 +1,7 @@
 use std::sync::{Arc,RwLock };
 use super::thing_object::ThingObject;
 use super::property_object::PropertyObject;
-use super::action_object::{ActionHandlerTrait, ActionObject};
+use super::action_object::{ActionHandlerTraits, ActionObject};
 use super::event_object::{EventObject,EventHandlerTraits};
 use super::super::affordances::thing_description::{ ThingDescription,ThingDescriptionFactory};
 use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
@@ -50,8 +50,9 @@ impl ThingHelpers {
         t_thing.add_event(name,ppo);
 
         
-        let mut ta: Arc<Box<dyn ThingDescription>> = t_thing.get_description_mut();
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
+        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
+
         td.add_event(name,pa.clone());
 
 
@@ -66,7 +67,7 @@ impl ThingHelpers {
         desc    : &Option<String>,
         href    : &String,
         id      : &Option<FormOperationType>,
-        handler : Arc<Box< dyn ActionHandlerTrait>>
+        handler : Arc<Box< dyn ActionHandlerTraits>>
     ) {
         let mut pa : Arc<Box<dyn ActionAffordance>> = Arc::new(ActionAffordanceFactory::new());
         let mut ppa: &mut Box<dyn ActionAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
@@ -89,9 +90,9 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_action(name.to_string(),ppo);
 
-        let mut ta: Arc<Box<dyn ThingDescription>> = t_thing.get_description_mut();
+        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
         td.add_action(name,pa.clone());
 
 
@@ -126,11 +127,15 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<Box<dyn ThingDescription>> = t_thing.get_description_mut();
+        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
         td.add_property(name,pa.clone());
 
+/*
+        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
+        td.add_property(name,pa.clone());
+*/
 
     }
     ///1
@@ -162,9 +167,10 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<Box<dyn ThingDescription>> = t_thing.get_description_mut();
+        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
+
         td.add_property(name,pa.clone());
 
 
@@ -199,9 +205,9 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<Box<dyn ThingDescription>> = t_thing.get_description_mut();
-
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut ta).unwrap();
+        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
+        
         td.add_property(name,pa.clone());
 
 

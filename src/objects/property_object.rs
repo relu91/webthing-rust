@@ -15,11 +15,11 @@ pub struct PropertyObject  {
     ///1
     name: String ,
     ///1
-    subs: BTreeSet<String>,
+    subs: RefCell<BTreeSet<String>>,
     ///1
     owner : RefCell<Weak<RwLock<ThingObject>>>,
     ///1
-    messages : BTreeMap<String, Vec<String>>
+    messages : RefCell<BTreeMap<String, Vec<String>>>
 }
 
 
@@ -30,9 +30,9 @@ impl PropertyObject {
             def : pa,
             val : None,
             name : n.clone(),
-            subs : BTreeSet::new(),
+            subs : RefCell::new(BTreeSet::new()),
             owner : RefCell::new(Weak::new()),
-            messages : BTreeMap::new()
+            messages : RefCell::new(BTreeMap::new())
         };
 
         *ret.owner.borrow_mut() = Arc::downgrade(&o);
@@ -57,18 +57,16 @@ impl PropertyObject {
 }
 
 impl ObservableObject for PropertyObject {
-    fn remove_subscriber(&mut self,ws_id: &String) {
-        self.subs.remove(ws_id);
+    fn remove_subscriber(&self,ws_id: &String) {
+        self.subs.borrow_mut().remove(ws_id);
     }
-    fn add_subscriber(&mut self,ws_id: &String) {
-        self.subs.insert(ws_id.clone());
+    fn add_subscriber(&self,ws_id: &String) {
+        self.subs.borrow_mut().insert(ws_id.clone());
 
     }
-    fn get_subscribers(&self) -> &BTreeSet<String> {
-        &self.subs
+    fn get_subscribers(&self) -> RefCell<BTreeSet<String>> {
+        self.subs.clone()
     }
-    fn get_subscribers_mut(&mut self) -> &mut BTreeSet<String> {
-        &mut self.subs
-    }
+
 
 }

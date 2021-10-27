@@ -547,28 +547,32 @@ impl ThingServer {
 
         //loads configured urls
         
+
         for (s,to) in  app_state.things.iter_mut() {
-            let mut td = &mut to.write().unwrap().get_thing_description();
+            let mtt = &mut to.write().unwrap();
+            let mttt = &mut mtt.get_thing_description();
 
-            for (n,p) in td.get_properties().iter() {
-                for f in p.get_forms().iter() {
-                    let u  = f.get_href();
-                    app_state.registered_props.insert(u.to_string(),ThingEndpointInfo::new(s,n));
+            let td = &mut mttt.read().unwrap();
+
+            for (np,p) in td.get_properties().iter() {
+                for fp in p.get_forms().iter() {
+                    let up  = fp.get_href();
+                    app_state.registered_props.insert(up.to_string(),ThingEndpointInfo::new(s,np));
                 }
             }
 
-            for (n,a) in td.get_actions().iter() {
-                for f in a.get_forms().iter() {
-                    let u  = f.get_href();
-                    app_state.registered_acts.insert(u.to_string(),ThingEndpointInfo::new(s,n));
+            for (na,a) in td.get_actions().iter() {
+                for fa in a.get_forms().iter() {
+                    let ua  = fa.get_href();
+                    app_state.registered_acts.insert(ua.to_string(),ThingEndpointInfo::new(s,na));
                 }
 
             }
 
-            for (n,e) in td.get_events().iter() {
-                for f in e.get_forms().iter() {
-                    let u  = f.get_href();
-                    app_state.registered_evts.insert(u.to_string(),ThingEndpointInfo::new(s,n));
+            for (ne,e) in td.get_events().iter() {
+                for fe in e.get_forms().iter() {
+                    let ue = fe.get_href();
+                    app_state.registered_evts.insert(ue.to_string(),ThingEndpointInfo::new(s,ne));
                     
 
                 }
@@ -576,9 +580,9 @@ impl ThingServer {
             }
 
             //and base forms
-            for f in td.get_forms().iter() {
-                let u  = f.get_href();
-                app_state.registered_base_forms.insert(u.to_string(),s.to_string());
+            for ff in td.get_forms().iter() {
+                let uf  = ff.get_href();
+                app_state.registered_base_forms.insert(uf.to_string(),s.to_string());
             }
         }
 
@@ -803,12 +807,9 @@ impl ThingWebSocket {
             //let mut thing = thing.write().unwrap();
 
             let drains = thing.drain_queue(act.get_id(),&object_name);
-            for iter in drains {
-                for message in iter {
-                    ctx.text(message);
-                }
+            for message in drains {
+                ctx.text(message);
             }
-
             act.drain_queue(ctx);
         });
     }

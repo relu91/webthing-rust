@@ -49,9 +49,12 @@ pub use affordances::link::Link;
 
 
 pub use objects::thing_object::ThingObject;
-pub use objects::action_object::{ ActionObject, ActionHandlerTrait};
-pub use objects::event_object::EventObject;
+pub use objects::action_object::{ ActionObject, ActionHandlerTraits};
+pub use objects::event_object::{EventObject,EventHandlerTraits};
 pub use objects::property_object::PropertyObject;
+
+pub use objects::notifiable_object::NotifiableObject;
+pub use objects::observable_object::ObservableObject;
 
 pub use objects::thing_helpers::ThingHelpers;
 

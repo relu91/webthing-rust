@@ -15,12 +15,12 @@ pub struct ActionObject {
   owner : RefCell<Weak<RwLock<ThingObject>>>,
     
   ///1
-  handler : Arc<Box< dyn ActionHandlerTrait>>
+  handler : Arc<Box< dyn ActionHandlerTraits>>
 }
 
 impl ActionObject {
     ///1
-    pub fn new(n: &String, pa : Arc<Box<dyn ActionAffordance>>, o: Arc<RwLock<ThingObject>>, h :  Arc<Box< dyn ActionHandlerTrait>>) -> Self {
+    pub fn new(n: &String, pa : Arc<Box<dyn ActionAffordance>>, o: Arc<RwLock<ThingObject>>, h :  Arc<Box< dyn ActionHandlerTraits>>) -> Self {
         let ret = ActionObject{
             def : pa,
             name : n.to_string(),
@@ -34,8 +34,8 @@ impl ActionObject {
     }
     ///1
     pub fn handle(&mut self) {
-       
-        self.handler.clone().handle(&mut *self);
+        let zz :&mut ActionObject = self;
+        zz.handler.handle(&mut zz.owner);
     }
 
     ///1
@@ -45,7 +45,7 @@ impl ActionObject {
 
 }
 ///1
-pub trait ActionHandlerTrait {
+pub trait ActionHandlerTraits {
     ///1
-    fn handle(&self, a: *mut ActionObject);
+    fn handle(&self, a: &mut  RefCell<Weak<RwLock<ThingObject>>>);
 }

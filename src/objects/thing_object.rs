@@ -1,6 +1,6 @@
 use std::collections::{ BTreeMap};
 use super::property_object::PropertyObject;
-use super::action_object::{ActionHandlerTrait, ActionObject};
+use super::action_object::{ActionHandlerTraits, ActionObject};
 use super::event_object::{EventObject,EventHandlerTraits};
 use super::notifiable_object::NotifiableObject;
 use super::observable_object::ObservableObject;
@@ -12,6 +12,7 @@ use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffo
 use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
 use std::sync::Arc;
+use std::sync::RwLock;
 use std::marker::Sync;
 use std::vec::Drain;
 
@@ -19,7 +20,7 @@ use std::vec::Drain;
 ///1
 pub struct ThingObject {
     ///1
-    td                  : Arc<Box<dyn ThingDescription>>,
+    td                  : Arc<RwLock<Box<dyn ThingDescription>>>,
     ///1
     props               : BTreeMap<String, PropertyObject>,
     ///1
@@ -37,39 +38,31 @@ pub fn coerce<S: ?Sized>(r: &mut Box<S>) -> &mut S {
 
 impl ThingObject {
     ///1
-    pub fn get_description(&self) -> Arc<Box<dyn ThingDescription>> {
+    pub fn get_description(&self) -> Arc<RwLock<Box<dyn ThingDescription>>> {
         self.td.clone()
     }
     ///1
-    pub fn get_description_mut(&mut self) -> Arc<Box<dyn ThingDescription>> {
+    pub fn get_description_mut(&mut self) -> Arc<RwLock<Box<dyn ThingDescription>>> {
         self.td.clone()
     }
     ///1
-    pub fn drain_queue(&mut self, ws_id: String, object_name : &String ) -> Vec<Drain<String>> {
-        let mut drains: Vec<Drain<String>> = Vec::new();
+    pub fn drain_queue(&mut self, ws_id: String, object_name : &String ) -> Vec<String> {
         let mut evt : &mut dyn NotifiableObject = match self.events.get_mut(object_name) {
             None => return Vec::new(),
             Some(x) => x
         };
 
-
-        let o = evt.get_notifications(&ws_id);
-        let v : &mut Vec<String> = 
-        match o {
-            None => return drains,
-            Some(x) => x
-        };
+        let mut v : Vec<String> = Vec::new();
+        evt.get_notifications(&ws_id,&mut v);
         
-        drains.push(v.drain(..));
-
-        drains
+        v
     }
 
 
     ///1
     pub fn new(ctx : &String) -> Self {
         let ret  = ThingObject {
-            td : Arc::new(ThingDescriptionFactory::new(ctx)),
+            td : Arc::new(RwLock::new(ThingDescriptionFactory::new(ctx))),
             props : BTreeMap::new(),
             actions : BTreeMap::new(),
             events : BTreeMap::new()
@@ -86,7 +79,7 @@ impl ThingObject {
     ///1
     pub fn  remove_property(&mut self, k : &String) {
         self.props.remove(k);
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        let td: &mut Box<dyn ThingDescription >= &mut self.td.write().unwrap();
         td.remove_property(k);
     }
     ///1
@@ -111,7 +104,7 @@ impl ThingObject {
     ///1
     pub fn  remove_event(&mut self, k : &String) {
         self.events.remove(k);
-        let td: &mut Box<dyn ThingDescription >= &mut Arc::get_mut(&mut self.td).unwrap();
+        let td: &mut Box<dyn ThingDescription >= &mut self.td.write().unwrap();
         td.remove_event(k);
     }
     ///1
@@ -144,7 +137,7 @@ impl ThingObject {
         &mut self.actions
     }
     ///1
-    pub fn get_thing_description(&self) -> Arc<Box<dyn ThingDescription>> {
+    pub fn get_thing_description(&self) -> Arc<RwLock<Box<dyn ThingDescription>>> {
         self.td.clone()
     }
     

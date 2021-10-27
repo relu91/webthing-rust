@@ -16,19 +16,19 @@ pub struct EventObject {
   ///1
   name: String ,
   ///1
-  subs: BTreeSet<String>,
+  subs: RefCell<BTreeSet<String>>,
   ///1
   owner : RefCell<Weak<RwLock<ThingObject>>>,
   ///1
   handler : Arc<Box<dyn EventHandlerTraits >>,
   ///1
-  messages : BTreeMap<String, Vec<String>>
+  messages : RefCell<BTreeMap<String, Vec<String>>>
 }
 
 ///1
 pub trait EventHandlerTraits {
     ///1
-    fn make_event_data(&self) -> serde_json::Value ;
+    fn make_event_data(&self, owner:  RefCell<Weak<RwLock<ThingObject>>>) -> serde_json::Value ;
 }
 
 impl EventObject {
@@ -42,10 +42,10 @@ impl EventObject {
         let ret = EventObject{
             def : pa,
             name : n.to_string(),
-            subs : BTreeSet::new(),
+            subs : RefCell::new(BTreeSet::new()),
             owner: RefCell::new(Weak::new()),
             handler : handl,
-            messages : BTreeMap::new()
+            messages : RefCell::new(BTreeMap::new())
         };
 
         *ret.owner.borrow_mut() = Arc::downgrade(&o);
@@ -60,15 +60,18 @@ impl EventObject {
 
 impl NotifiableObject for EventObject {
     ///1
-    fn notify_event(&mut self) {
-        let zz :&mut EventObject = self;
-        let jmsg = zz.handler.make_event_data();
+    fn notify_event(&self) {
+        
+        let jmsg = self.handler.make_event_data(self.owner.clone());
         let msg = jmsg.to_string();
 
-        let subs : &BTreeSet<String> = &mut zz.subs;
+        let so = self.subs.borrow_mut();
 
-        for ws_id  in subs {
-            let v : &mut Vec<String> = match zz.messages.get_mut(ws_id) {
+        for ws_id  in so.iter() {
+            let s_ws_id = ws_id.clone();
+            let mut s_this_msgs = self.messages.borrow_mut();
+
+            let v : &mut Vec<String> = match s_this_msgs.get_mut(&s_ws_id) {
                 Some(x) => x,
                 None => return
             };
@@ -79,38 +82,48 @@ impl NotifiableObject for EventObject {
     }
 
     ///1
-    fn add_notification(&mut self,ws_id: &String, msg : &String) {
-        let mut v : &mut Vec<String> = match self.messages.get_mut(ws_id) {
+    fn add_notification(&self,ws_id: &String, msg : &String) {
+        let s_ws_id = ws_id.clone();
+        let mut s_this_msgs = self.messages.borrow_mut();
+
+        let v : &mut Vec<String> = match s_this_msgs.get_mut(&s_ws_id) {
             Some(x) => x,
             None => return
         };
 
         v.push(msg.clone());
-    }
+}
     ///1
-    fn get_notifications(&mut self,ws_id: &String) ->  Option<&mut Vec<String>> {
-        self.messages.get_mut(ws_id)
+    fn get_notifications(&mut self,ws_id: &String, tgt : &mut Vec<String>) {
 
+        let mmap = &mut self.messages.get_mut();
+
+        let data = mmap.get_mut(ws_id);
+
+        if data.is_some() {
+            let v = data.unwrap();
+            tgt.append(v);
+        }
+
+        
     }
 }
 
 impl ObservableObject for EventObject {
-    fn remove_subscriber(&mut self,ws_id: &String) {
-        self.subs.remove(ws_id);
-        self.messages.remove(ws_id);
+    fn remove_subscriber(&self,ws_id: &String) {
+        self.subs.borrow_mut().remove(ws_id);
+        self.messages.borrow_mut().remove(ws_id);
         
     }
-    fn add_subscriber(&mut self,ws_id: &String) {
-        self.subs.insert(ws_id.clone());
-        self.messages.remove(ws_id);
-        self.messages.insert(ws_id.clone(),Vec::new());
+    fn add_subscriber(&self,ws_id: &String) {
+        self.subs.borrow_mut().insert(ws_id.clone());
+        self.messages.borrow_mut().remove(ws_id);
+        self.messages.borrow_mut().insert(ws_id.clone(),Vec::new());
 
     }
-    fn get_subscribers(&self) -> &BTreeSet<String>{
-        &self.subs
+    fn get_subscribers(&self) -> RefCell<BTreeSet<String>>{
+        self.subs.clone()
     }
 
-    fn get_subscribers_mut(&mut self) -> &mut BTreeSet<String> {
-        &mut self.subs
-    }
+
 }

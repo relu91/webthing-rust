@@ -1,3 +1,5 @@
+/*
+
 use serde_json;
 use serde_json::json;
 use std::marker::{Send, Sync};
@@ -5,44 +7,17 @@ use std::sync::{Arc, RwLock, Weak};
 
 use super::thing::Thing;
 use super::utils::timestamp;
+use super::affordances::action_affordance::ActionAffordance;
 
 /// High-level Action trait.
 pub trait Action: Send + Sync {
     /// Get the action description.
     ///
     /// Returns a JSON map describing the action.
-    fn as_action_description(&self) -> serde_json::Map<String, serde_json::Value> {
-        let mut description = serde_json::Map::new();
-        let mut inner = serde_json::Map::new();
-        inner.insert("href".to_owned(), json!(self.get_href()));
-        inner.insert("timeRequested".to_owned(), json!(self.get_time_requested()));
-        inner.insert("status".to_owned(), json!(self.get_status()));
-
-        let input = self.get_input();
-        if input.is_some() {
-            inner.insert("input".to_owned(), json!(input.unwrap()));
-        }
-
-        let time_completed = self.get_time_completed();
-        if time_completed.is_some() {
-            inner.insert("timeCompleted".to_owned(), json!(time_completed.unwrap()));
-        }
-
-        description.insert(self.get_name(), json!(inner));
-        description
-    }
-
-    /// Set the prefix of any hrefs associated with this action.
-    fn set_href_prefix(&mut self, prefix: String);
-
-    /// Get this action's ID.
-    fn get_id(&self) -> String;
 
     /// Get this action's name.
     fn get_name(&self) -> String;
 
-    /// Get this action's href.
-    fn get_href(&self) -> String;
 
     /// Get this action's status.
     fn get_status(&self) -> String;
@@ -119,24 +94,11 @@ impl BaseAction {
 /// An Action represents an individual action on a thing.
 impl Action for BaseAction {
     /// Set the prefix of any hrefs associated with this action.
-    fn set_href_prefix(&mut self, prefix: String) {
-        self.href_prefix = prefix;
-    }
-
-    /// Get this action's ID.
-    fn get_id(&self) -> String {
-        self.id.clone()
-    }
-
     /// Get this action's name.
     fn get_name(&self) -> String {
         self.name.clone()
     }
 
-    /// Get this action's href.
-    fn get_href(&self) -> String {
-        format!("{}{}", self.href_prefix, self.href)
-    }
 
     /// Get this action's status.
     fn get_status(&self) -> String {
@@ -185,3 +147,5 @@ impl Action for BaseAction {
         self.time_completed = Some(timestamp());
     }
 }
+
+*/

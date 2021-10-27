@@ -1,7 +1,10 @@
+
+/*
 use serde_json;
-use serde_json::json;
 use std::marker::{Send, Sync};
-use valico::json_schema;
+use super::affordances::property_affordance::PropertyAffordance;
+
+
 
 /// Used to forward a new property value to the physical/virtual device.
 pub trait ValueForwarder: Send + Sync {
@@ -15,34 +18,24 @@ pub trait Property: Send + Sync {
     ///
     /// Returns a result indicating validity.
     fn validate_value(&self, value: &serde_json::Value) -> Result<(), &'static str> {
-        let mut description = self.get_metadata();
-        description.remove("@type");
-        description.remove("unit");
-        description.remove("title");
+        let mut affordance = self.get_affordance();
 
-        if description.contains_key("readOnly") {
-            let b = description.get("readOnly").unwrap().as_bool();
-            if b.is_some() && b.unwrap() {
-                return Err("Read-only property");
-            }
-        }
-
-        let mut scope = json_schema::Scope::new();
-        match scope.compile_and_return(json!(description), true) {
-            Ok(validator) => {
-                if validator.validate(value).is_valid() {
-                    Ok(())
-                } else {
-                    Err("Invalid property value")
+        match affordance.get_readonly() {
+            None  => (),
+            Some(x) => {
+                if x {
+                    return Err("Read-only property");
                 }
             }
-            Err(_) => Err("Invalid property schema"),
         }
+        Ok(())
+
     }
 
     /// Get the property description.
     ///
     /// Returns a JSON value describing the property.
+    /*/// 
     fn as_property_description(&self) -> serde_json::Map<String, serde_json::Value> {
         let mut description = self.get_metadata().clone();
         let link = json!(
@@ -64,12 +57,10 @@ pub trait Property: Send + Sync {
         }
         description
     }
-
-    /// Set the prefix of any hrefs associated with this property.
-    fn set_href_prefix(&mut self, prefix: String);
+*/
 
     /// Get the href of this property.
-    fn get_href(&self) -> String;
+    ///fn get_href(&self) -> String;
 
     /// Get the current property value.
     fn get_value(&self) -> serde_json::Value;
@@ -83,8 +74,10 @@ pub trait Property: Send + Sync {
     /// Get the name of this property.
     fn get_name(&self) -> String;
 
-    /// Get the metadata associated with this property.
-    fn get_metadata(&self) -> serde_json::Map<String, serde_json::Value>;
+    // Get the metadata associated with this property.
+    //fn get_metadata(&self) -> serde_json::Map<String, serde_json::Value>;
+
+    fn get_affordance(&self) -> &Box<dyn PropertyAffordance>;
 }
 
 /// Basic property implementation.
@@ -96,9 +89,7 @@ pub struct BaseProperty {
     name: String,
     last_value: serde_json::Value,
     value_forwarder: Option<Box<dyn ValueForwarder>>,
-    href_prefix: String,
-    href: String,
-    metadata: serde_json::Map<String, serde_json::Value>,
+    data           : Box<dyn PropertyAffordance>
 }
 
 impl BaseProperty {
@@ -114,36 +105,21 @@ impl BaseProperty {
         name: String,
         initial_value: serde_json::Value,
         value_forwarder: Option<Box<dyn ValueForwarder>>,
-        metadata: Option<serde_json::Map<String, serde_json::Value>>,
+        data : Box<dyn PropertyAffordance>
     ) -> BaseProperty {
-        let meta = match metadata {
-            Some(m) => m,
-            None => serde_json::Map::new(),
-        };
 
-        let href = format!("/properties/{}", name);
+        
 
         BaseProperty {
             name: name,
             last_value: initial_value,
             value_forwarder: value_forwarder,
-            href_prefix: "".to_owned(),
-            href: href,
-            metadata: meta,
+            data : data
         }
     }
 }
 
 impl Property for BaseProperty {
-    /// Set the prefix of any hrefs associated with this property.
-    fn set_href_prefix(&mut self, prefix: String) {
-        self.href_prefix = prefix;
-    }
-
-    /// Get the href of this property.
-    fn get_href(&self) -> String {
-        format!("{}{}", self.href_prefix, self.href).to_string()
-    }
 
     /// Get the current property value.
     fn get_value(&self) -> serde_json::Value {
@@ -181,10 +157,11 @@ impl Property for BaseProperty {
     /// Get the name of this property.
     fn get_name(&self) -> String {
         self.name.clone()
+
     }
 
-    /// Get the metadata associated with this property.
-    fn get_metadata(&self) -> serde_json::Map<String, serde_json::Value> {
-        self.metadata.clone()
+    fn get_affordance(&self) -> &Box<dyn PropertyAffordance> {
+        &self.data
     }
 }
+*/

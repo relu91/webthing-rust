@@ -1,3 +1,62 @@
+/*
+struct HostValidator;
+
+impl<S, B> Transform<S> for HostValidator
+where
+    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Request = ServiceRequest;
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type InitError = ();
+    type Transform = HostValidatorMiddleware<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ok(HostValidatorMiddleware { service })
+    }
+}
+
+struct HostValidatorMiddleware<S> {
+    service: S,
+}
+
+impl<S, B> Service for HostValidatorMiddleware<S>
+where
+    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Request = ServiceRequest;
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type Future = Either<S::Future, Ready<Result<Self::Response, Self::Error>>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.service.poll_ready(cx)
+    }
+
+    fn call(&mut self, req: ServiceRequest) -> Self::Future {
+        let state = req.app_data::<web::Data<AppState>>();
+        if state.is_none() {
+            return Either::Right(ok(
+                req.into_response(HttpResponse::Forbidden().finish().into_body())
+            ));
+        }
+
+        let state = state.unwrap();
+
+        let host = req.headers().get("Host");
+        match state.validate_host(host) {
+            Ok(_) => Either::Left(self.service.call(req)),
+            Err(_) => Either::Right(ok(
+                req.into_response(HttpResponse::Forbidden().finish().into_body())
+            )),
+        }
+    }
+}
 /// Rust Web Thing server implementation.
 use actix;
 use actix::prelude::*;
@@ -1177,3 +1236,4 @@ impl WebThingServer {
         }
     }
 }
+*/

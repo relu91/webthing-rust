@@ -10,7 +10,7 @@ pub (crate) trait JSonSerializer {
     fn copy(&self,n : String, tgt:&mut  serde_json::Map<String, serde_json::Value>);
 } 
 
-pub (crate) mod JSONSerialzerHelpers {
+pub (crate) mod json_serializer_helpers {
     use std::collections::btree_map::BTreeMap;
     use std::collections::btree_set::BTreeSet;
     use super::super::w3c_list::W3CList;

@@ -14,7 +14,7 @@ pub struct EventObject {
   ///1
   def : Arc<Box<dyn EventAffordance>>,
   ///1
-  name: String ,
+  _name: String ,
   ///1
   subs: RefCell<BTreeSet<String>>,
   ///1
@@ -41,7 +41,7 @@ impl EventObject {
     ) -> Self {
         let ret = EventObject{
             def : pa,
-            name : n.to_string(),
+            _name : n.to_string(),
             subs : RefCell::new(BTreeSet::new()),
             owner: RefCell::new(Weak::new()),
             handler : handl,

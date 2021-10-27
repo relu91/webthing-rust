@@ -8,7 +8,6 @@ use std::cell::RefCell;
 use webthing::{
     thing_server::ThingServer, 
     ThingObject, 
-    FormOperationType,
     ThingHelpers,
     EventHandlerTraits,
     ActionHandlerTraits,

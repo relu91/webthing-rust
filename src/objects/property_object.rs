@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use super::super::affordances::property_affordance::PropertyAffordance;
 use super::observable_object::ObservableObject;
+use super::notifiable_object::NotifiableObject;
 use std::sync::{Arc,Weak,RwLock};
 use std::cell::RefCell;
 use super::thing_object::ThingObject;
@@ -13,7 +14,7 @@ pub struct PropertyObject  {
     ///1
     val : Option<serde_json::Value>,
     ///1
-    name: String ,
+    _name: String ,
     ///1
     subs: RefCell<BTreeSet<String>>,
     ///1
@@ -29,7 +30,7 @@ impl PropertyObject {
         let ret = PropertyObject {
             def : pa,
             val : None,
-            name : n.clone(),
+            _name : n.clone(),
             subs : RefCell::new(BTreeSet::new()),
             owner : RefCell::new(Weak::new()),
             messages : RefCell::new(BTreeMap::new())
@@ -47,7 +48,7 @@ impl PropertyObject {
     pub fn set_value(&mut self, v: &Option<serde_json::Value>) {
         self.val = v.clone();
 
-        
+        self.notify_event();
 
     }
     ///1
@@ -69,4 +70,55 @@ impl ObservableObject for PropertyObject {
     }
 
 
+}
+
+impl NotifiableObject for PropertyObject {
+    ///1
+    fn notify_event(&self) {
+        
+        let jmsg = self.get_value().clone().unwrap();
+        let msg = jmsg.to_string();
+
+        let so = self.subs.borrow_mut();
+
+        for ws_id  in so.iter() {
+            let s_ws_id = ws_id.clone();
+            let mut s_this_msgs = self.messages.borrow_mut();
+
+            let v : &mut Vec<String> = match s_this_msgs.get_mut(&s_ws_id) {
+                Some(x) => x,
+                None => return
+            };
+    
+            v.push(msg.clone());
+    
+        }
+    }
+
+    ///1
+    fn add_notification(&self,ws_id: &String, msg : &String) {
+        let s_ws_id = ws_id.clone();
+        let mut s_this_msgs = self.messages.borrow_mut();
+
+        let v : &mut Vec<String> = match s_this_msgs.get_mut(&s_ws_id) {
+            Some(x) => x,
+            None => return
+        };
+
+        v.push(msg.clone());
+}
+    ///1
+    fn get_notifications(&mut self,ws_id: &String, tgt : &mut Vec<String>) {
+
+        let mmap = &mut self.messages.get_mut();
+
+        let data = mmap.get_mut(ws_id);
+
+        if data.is_some() {
+            let v = data.unwrap();
+            tgt.append(v);
+        }
+
+        
+    }
 }

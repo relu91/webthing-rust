@@ -175,7 +175,7 @@ pub trait DigestSecurityScheme : BasicSecurityScheme {
 #[derive(Debug)] 
 struct BaseBasicSecurityScheme {
     base        : BaseSecurityScheme,
-    inLocation  : SecuritySchemeInLocation,
+    in_location : SecuritySchemeInLocation,
     name        : Option<String>
 
 }
@@ -185,7 +185,7 @@ impl JSonObject for BaseBasicSecurityScheme {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
         let mut m  = self.base.to_json();
         self.name.copy("name".to_string(), &mut m);
-        self.inLocation.copy("in".to_string(), &mut m);
+        self.in_location.copy("in".to_string(), &mut m);
 
         m
     }
@@ -237,11 +237,11 @@ impl SecurityScheme for BaseBasicSecurityScheme {
 impl BasicSecurityScheme for BaseBasicSecurityScheme {
     ///1
     fn get_in(&self) -> &SecuritySchemeInLocation {
-        &self.inLocation
+        &self.in_location
     }
     ///1
     fn set_in(&mut self, v : &SecuritySchemeInLocation) {
-        &self.inLocation;
+        self.in_location = v.clone();
     }
     ///1
     fn get_name(&self) -> &Option<String> {
@@ -258,7 +258,7 @@ impl BaseBasicSecurityScheme {
     pub fn new() -> Self {
         BaseBasicSecurityScheme {
             base : BaseSecurityScheme::new(SecuritySchemeId::Basic),
-            inLocation : SecuritySchemeInLocation::Header,
+            in_location : SecuritySchemeInLocation::Header,
             name : None
         }
     }
@@ -269,7 +269,7 @@ impl BaseBasicSecurityScheme {
 #[derive(Debug)]
 struct BaseDigestSecurityScheme {
     base        : BaseSecurityScheme,
-    inLocation  : SecuritySchemeInLocation,
+    in_location  : SecuritySchemeInLocation,
     name        : Option<String>,
     qop         : SecuritySchemeDigestQOP 
 }
@@ -280,7 +280,7 @@ impl JSonObject for BaseDigestSecurityScheme {
     fn to_json(&self) -> serde_json::Map<String, serde_json::Value> {
         let mut m  = self.base.to_json();
         self.name.copy("name".to_string(), &mut m);
-        self.inLocation.copy("in".to_string(), &mut m);
+        self.in_location.copy("in".to_string(), &mut m);
         self.qop.copy("qop".to_string(),&mut m);
         m
     }
@@ -332,11 +332,11 @@ impl SecurityScheme for BaseDigestSecurityScheme {
 impl BasicSecurityScheme for BaseDigestSecurityScheme {
     ///1
     fn get_in(&self) -> &SecuritySchemeInLocation {
-        &self.inLocation
+        &self.in_location
     }
     ///1
     fn set_in(&mut self, v : &SecuritySchemeInLocation) {
-        &self.inLocation;
+        self.in_location = v.clone();
     }
     ///1
     fn get_name(&self) -> &Option<String> {
@@ -365,7 +365,7 @@ impl BaseDigestSecurityScheme {
     pub fn new() -> Self {
         BaseDigestSecurityScheme {
             base : BaseSecurityScheme::new(SecuritySchemeId::Digest),
-            inLocation : SecuritySchemeInLocation::Header,
+            in_location : SecuritySchemeInLocation::Header,
             name : None,
             qop : SecuritySchemeDigestQOP::Auth,
         }

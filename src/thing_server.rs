@@ -19,23 +19,20 @@ use uuid::Uuid;
 #[cfg(feature = "ssl")]
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use std::marker::{Send, Sync};
-use std::sync::{Arc , RwLock,RwLockWriteGuard};
+use std::sync::{Arc , RwLock};
 use std::task::{Context, Poll};
 use std::clone::Clone;
 use std::collections::BTreeMap;
 
 use super::objects::thing_object::ThingObject;
-use super::affordances::interaction_affordance::{InteractionAffordance};
-//use super::affordances::property_affordance::{PropertyAffordance};
 use super::affordances::form::{Form, FormOperationType};
 use super::objects::property_object::PropertyObject;
 use super::objects::event_object::EventObject;
 use super::objects::action_object::ActionObject;
-use super::objects::notifiable_object::NotifiableObject;
 use super::objects::observable_object::ObservableObject;
 
 
-use web::{Bytes, post, Query};
+use web::{Bytes};
 //use super::affordances::thing_description::ThingDescription;
 const SERVICE_TYPE: &str = "_webthing._tcp";
 
@@ -199,7 +196,7 @@ fn handle_put_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>
 }
 
 fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String, bytes : Bytes) -> HttpResponse {
-    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
+    let app : &mut AppState = &mut state.as_ref().write().unwrap();
     let u = req.path();
 
 
@@ -236,7 +233,7 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
         return HttpResponse::NotFound().finish();
     }
 
-    let mut po = s_po.unwrap();
+    let po = s_po.unwrap();
 
     let def = po.get_definition();
     //do some access checking
@@ -244,9 +241,9 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
     
 
 
-    let mut this_method  : Option<String> = None;
+    let mut this_method  : Option<String>;
     let mut opid : Option<FormOperationType> = None;
-    let mut this_form : Option<&Form> = None;
+    let mut _this_form : Option<&Form> ;
 
     let mut found : bool = false;
 
@@ -272,7 +269,7 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
 
             if this_method.is_some() && this_method.unwrap() == method {
                 found = true;
-                this_form = Some(&f);
+                _this_form = Some(&f);
                 break;
             }
 
@@ -284,8 +281,8 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
     }
 
     //now, do some access checking
-    let mut ro : bool = false;
-    let mut wo : bool = false;
+    let ro : bool;
+    let wo : bool;
 
     match def.get_readonly()  {
         None => ro = false,
@@ -305,11 +302,11 @@ fn handle_property(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, me
 
     //eventually build response
     if opid.unwrap() ==  FormOperationType::WriteProperty {
-        let bodyRes = String::from_utf8(bytes.to_vec());
-        if bodyRes.is_err() {
+        let body_res = String::from_utf8(bytes.to_vec());
+        if body_res.is_err() {
             return HttpResponse::BadRequest().finish();
         }
-        let body = bodyRes.unwrap();
+        let body = body_res.unwrap();
         
         let parsed  : serde_json::Value = serde_json::from_str(&body).expect("JSON was not well-formatted");
 
@@ -346,8 +343,8 @@ fn handle_put_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, 
     handle_action(req,state,"PUT".to_string(),bytes)        
 }
 
-fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String, bytes : Bytes) -> HttpResponse {
-    let mut app : &mut AppState = &mut state.as_ref().write().unwrap();
+fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String, _bytes : Bytes) -> HttpResponse {
+    let app : &mut AppState = &mut state.as_ref().write().unwrap();
     let u = req.path();
 
 
@@ -394,9 +391,9 @@ fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, meth
     
 
 
-    let mut this_method  : Option<String> = None;
-    let mut opid : Option<FormOperationType> = None;
-    let mut this_form : Option<&Form> = None;
+    let mut this_method  : Option<String>;
+    let _opid : Option<FormOperationType>;
+    let _this_form : Option<&Form>;
 
     let mut found : bool = false;
 
@@ -410,7 +407,7 @@ fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, meth
 
             if this_method.is_some() && this_method.unwrap() == method {
                 found = true;
-                this_form = Some(&f);
+                _this_form = Some(&f);
                 break;
             }
 
@@ -484,9 +481,9 @@ async fn handle_ws_thing(
         return Ok(HttpResponse::NotFound().finish());
     }
 
-    let mut po = s_po.unwrap();
+    let po = s_po.unwrap();
 
-    let def = po.get_definition();
+    let _def = po.get_definition();
 
     let thing_id = req.match_info().get("thing_id");
 
@@ -496,7 +493,7 @@ async fn handle_ws_thing(
     };
     let ws = ThingWebSocket {
         id: Uuid::new_v4().to_string(),
-        thing_id: thing_id,
+        _thing_id: thing_id,
         thing_name : thing_info.thing_name.clone(),
         object_name : thing_info.object_name.clone(),
         app_state : state.as_ref().clone(),
@@ -523,7 +520,7 @@ impl ThingServer {
         ssl_options: Option<(String, String)>,
         objs       : BTreeMap<String, Arc<RwLock<ThingObject>>>
     ) -> Self {
-        let mut  ret = ThingServer {
+        let ret = ThingServer {
             base_path   :   Arc::new(base_path),
             port        :   Arc::new(port) ,
             hostname    :   Arc::new(hostname),
@@ -544,7 +541,7 @@ impl ThingServer {
             )
         };
 
-        let mut app_state : &mut AppState = &mut ret.app_state.write().unwrap();
+        let app_state : &mut AppState = &mut ret.app_state.write().unwrap();
 
 
         //loads configured urls
@@ -595,7 +592,7 @@ impl ThingServer {
     ///1
     pub fn start(
         &mut self,
-        configure: Option<Arc<dyn Fn(&mut web::ServiceConfig) + Send + Sync + 'static>>
+        _configure: Option<Arc<dyn Fn(&mut web::ServiceConfig) + Send + Sync + 'static>>
     ) -> Server {
         let port = match *self.port {
             Some(p) => p,
@@ -779,7 +776,7 @@ impl ThingServer {
 ///1
 pub struct ThingWebSocket {
     id: String,
-    thing_id: usize,
+    _thing_id: usize,
     thing_name: String,
     object_name : String,
     url : String,
@@ -803,7 +800,7 @@ impl ThingWebSocket {
             let appstate = s_appstate.write().unwrap();
             let mut thing = appstate.things.get(&name).unwrap().write().unwrap();
 
-            let mut evt : &EventObject = thing.get_event_mut(&object_name).unwrap();
+            let _evt : &EventObject = thing.get_event_mut(&object_name).unwrap();
             
 
             //let mut thing = thing.write().unwrap();
@@ -825,7 +822,7 @@ impl ThingWebSocket {
 
     fn remove_subscriber(&mut self) {
          
-        let mut app_state : &mut AppState = &mut self.app_state.write().unwrap();
+        let app_state : &mut AppState = &mut self.app_state.write().unwrap();
 
         let u : &String = &mut self.url.clone();
 

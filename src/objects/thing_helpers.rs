@@ -3,7 +3,7 @@ use super::thing_object::ThingObject;
 use super::property_object::PropertyObject;
 use super::action_object::{ActionHandlerTraits, ActionObject};
 use super::event_object::{EventObject,EventHandlerTraits};
-use super::super::affordances::thing_description::{ ThingDescription,ThingDescriptionFactory};
+use super::super::affordances::thing_description::{ ThingDescription};
 use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
 use super::super::affordances::event_affordance::{ EventAffordance, EventAffordanceFactory};
 use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
@@ -29,7 +29,7 @@ impl ThingHelpers {
     ) {
         let mut pa : Arc<Box<dyn EventAffordance>> = Arc::new(EventAffordanceFactory::new());
         let mut ppa: &mut Box<dyn EventAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
-        let mut s_ref: &mut dyn EventAffordance = coerce(&mut ppa);
+        let     s_ref: &mut dyn EventAffordance = coerce(&mut ppa);
 
         super::super::affordances::interaction_affordance::InteractionAffordance::set_title(s_ref,&Some(name.to_string()));
         super::super::affordances::interaction_affordance::InteractionAffordance::set_description( s_ref, desc);
@@ -50,7 +50,7 @@ impl ThingHelpers {
         t_thing.add_event(name,ppo);
 
         
-        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
         let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
         td.add_event(name,pa.clone());
@@ -71,7 +71,7 @@ impl ThingHelpers {
     ) {
         let mut pa : Arc<Box<dyn ActionAffordance>> = Arc::new(ActionAffordanceFactory::new());
         let mut ppa: &mut Box<dyn ActionAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
-        let mut s_ref: &mut dyn ActionAffordance = coerce(&mut ppa);
+        let     s_ref: &mut dyn ActionAffordance = coerce(&mut ppa);
 
         super::super::affordances::interaction_affordance::InteractionAffordance::set_title(s_ref,&Some(name.to_string()));
         super::super::affordances::interaction_affordance::InteractionAffordance::set_description( s_ref, desc);
@@ -85,12 +85,12 @@ impl ThingHelpers {
 
         ppa.add_form(frm);
 
-        let ppo = ActionObject::new(name,pa.clone(),thing.clone(),handler);
+        let ppo = ActionObject::new(name,pa.clone(),handler);
 
         let mut t_thing = thing.write().unwrap();
         t_thing.add_action(name.to_string(),ppo);
 
-        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
         let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
         td.add_action(name,pa.clone());
@@ -108,7 +108,7 @@ impl ThingHelpers {
     ) {
         let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
         let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
-        let mut s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
+        let     s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
 
         PropertyAffordance::set_description(&mut *s_ref,desc);
         PropertyAffordance::set_title(&mut *s_ref,&Some(name.clone()));
@@ -127,7 +127,7 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
         let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
         td.add_property(name,pa.clone());
@@ -148,7 +148,7 @@ impl ThingHelpers {
     ) {
         let mut pa : Arc<Box<dyn PropertyAffordance>> = Arc::new(PropertyAffordanceFactory::new());
         let mut ppa: &mut Box<dyn PropertyAffordance >= &mut Arc::get_mut(&mut pa).unwrap();
-        let mut s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
+        let     s_ref: &mut dyn PropertyAffordance = coerce(&mut ppa);
 
         PropertyAffordance::set_description(&mut *s_ref,desc);
         PropertyAffordance::set_title(&mut *s_ref,&Some(name.clone()));
@@ -167,7 +167,7 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
         let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
 
 
@@ -205,7 +205,7 @@ impl ThingHelpers {
         let mut t_thing = thing.write().unwrap();
         t_thing.add_property(name,ppo);
 
-        let mut ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
+        let ta: Arc<RwLock<Box<dyn ThingDescription>>> = t_thing.get_description_mut();
         let td: &mut Box<dyn ThingDescription >= &mut ta.write().unwrap();
         
         td.add_property(name,pa.clone());

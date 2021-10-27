@@ -1,20 +1,16 @@
 use std::collections::{ BTreeMap};
 use super::property_object::PropertyObject;
-use super::action_object::{ActionHandlerTraits, ActionObject};
-use super::event_object::{EventObject,EventHandlerTraits};
+use super::action_object::{ ActionObject};
+use super::event_object::{EventObject};
 use super::notifiable_object::NotifiableObject;
-use super::observable_object::ObservableObject;
+
 
 use super::super::affordances::thing_description::{ ThingDescription,ThingDescriptionFactory};
-use super::super::affordances::property_affordance::{ PropertyAffordance, PropertyAffordanceFactory};
-use super::super::affordances::event_affordance::{ EventAffordance, EventAffordanceFactory};
-use super::super::affordances::action_affordance::{ ActionAffordance, ActionAffordanceFactory};
-use super::super::affordances::form::{Form,FormOperationType };
 use std::boxed::Box;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::marker::Sync;
-use std::vec::Drain;
+
 
 
 ///1
@@ -47,7 +43,7 @@ impl ThingObject {
     }
     ///1
     pub fn drain_queue(&mut self, ws_id: String, object_name : &String ) -> Vec<String> {
-        let mut evt : &mut dyn NotifiableObject = match self.events.get_mut(object_name) {
+        let evt : &mut dyn NotifiableObject = match self.events.get_mut(object_name) {
             None => return Vec::new(),
             Some(x) => x
         };

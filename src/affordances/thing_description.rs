@@ -254,7 +254,7 @@ impl ThingDescription for BaseThingDescription {
         self.ctx = v.clone();
     }
     ///1
-    fn add_context(&mut self, v: &String) {
+    fn add_context(&mut self, _v: &String) {
 /*        
         match self.ctx {
             W3CList::List (&mut val) => val.add(v),
@@ -279,7 +279,7 @@ impl ThingDescription for BaseThingDescription {
         self.types = v.clone();
     }
     ///1
-    fn add_type(&mut self, v : &String) {
+    fn add_type(&mut self, _v : &String) {
         
     }
     ///1
@@ -476,7 +476,7 @@ impl ThingDescription for BaseThingDescription {
         &self.forms
     }
     ///2
-    fn set_forms(&mut self, v : &BTreeSet<Form>) {
+    fn set_forms(&mut self, _v : &BTreeSet<Form>) {
         //self.forms = &v.clone();
     }
     ///1

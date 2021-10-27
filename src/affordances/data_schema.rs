@@ -235,7 +235,7 @@ impl DataSchema for BaseDataSchema {
     }
     ///1
     fn remove_oneof(&mut self, i : i32) {
-
+        self.one_of.remove(i as usize);
     }
     ///1
     fn get_format(&self) -> Option<String> {
@@ -397,7 +397,7 @@ impl DataSchema for BaseIntegerDataSchema {
     }
     ///1
     fn remove_oneof(&mut self, i : i32) {
-
+        self.base.one_of.remove(i as usize);
     }
     ///1
     fn get_format(&self) -> Option<String> {
@@ -548,7 +548,7 @@ impl DataSchema for BaseNumberDataSchema {
     }
     ///1
     fn remove_oneof(&mut self, i : i32) {
-
+        self.base.one_of.remove(i as usize);
     }
     ///1
     fn get_format(&self) -> Option<String> {

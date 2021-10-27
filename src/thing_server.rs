@@ -436,7 +436,112 @@ fn handle_put_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>
 }
 
 fn handle_base_form(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, method : String) -> HttpResponse {
-    HttpResponse::NotFound().finish()
+
+    let app : &mut AppState = &mut state.as_ref().write().unwrap();
+    let u = req.path();
+
+
+
+    if app.registered_props.contains_key(u) == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    
+    let r  = app.registered_props.get(u);
+    if r.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+    let thing_info = r.unwrap();
+    
+    let thing_name : &String = &thing_info.thing_name;
+    let obj_name : &String = &thing_info.object_name;
+
+    let  s_thing_obj = app.things.get_mut(thing_name);
+
+    if s_thing_obj.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+
+    let  w_thing_obj = &mut s_thing_obj.unwrap();
+
+    //go into forms
+
+    let mut thing_obj =  w_thing_obj.write().unwrap();
+    let s_po : Option<&mut PropertyObject> =  thing_obj.get_property_mut(obj_name);
+    
+    if s_po.is_none() {
+        return HttpResponse::NotFound().finish();
+    }
+
+    let po = s_po.unwrap();
+
+    let def = po.get_definition();
+    //do some access checking
+
+    
+
+
+    let mut this_method  : Option<String>;
+    let mut opid : Option<FormOperationType> = None;
+    let mut _this_form : Option<&Form> ;
+
+    let mut found : bool = false;
+
+    for f in def.get_forms() {
+        let this_path = f.get_href().to_string();
+        if this_path == u {
+            this_method = f.get_method_name().clone();
+            if this_method.is_none() {
+                let op_list = f.get_operation_list();
+                if op_list.len() > 0 {
+                    let zopid = op_list.iter().next().unwrap();
+                    match zopid {
+                        FormOperationType::ReadProperty => this_method = Some("GET".to_string()),
+                        FormOperationType::WriteProperty => this_method = Some("PUT".to_string()),
+                        _ => ()
+                    }
+                    opid = Some(zopid);
+                    
+
+
+                }
+            }
+
+            if this_method.is_some() && this_method.unwrap() == method {
+                found = true;
+                _this_form = Some(&f);
+                break;
+            }
+
+        }
+    }
+
+    if found == false {
+        return HttpResponse::NotFound().finish();
+    }
+
+    match opid.unwrap() {
+        FormOperationType::ReadAllProperties => {
+            let mut ret = serde_json::Map::new();
+            
+
+            for (n,po) in thing_obj.get_properties() {
+                let name = n.clone();
+                let val = po.get_value().clone().unwrap();
+
+                ret.insert(name,val);
+            }
+
+            HttpResponse::Ok().json(ret)
+        }
+        FormOperationType::ReadMultiPleproperties => HttpResponse::NotFound().finish(),
+        FormOperationType::WriteMultiPleproperties => HttpResponse::NotFound().finish(),
+        FormOperationType::WriteAllProperties => HttpResponse::NotFound().finish(),
+
+        _ =>  HttpResponse::NotFound().finish()
+    }
+    
 }
 /// Handle websocket on /.
 async fn handle_ws_thing(

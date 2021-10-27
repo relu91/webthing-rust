@@ -10,11 +10,7 @@ pub struct ActionObject {
   def : Arc<Box<dyn ActionAffordance>>,
   ///1
   name: String ,
-
-  ///1
-  owner : RefCell<Weak<RwLock<ThingObject>>>,
-    
-  ///1
+///1
   handler : Arc<Box< dyn ActionHandlerTraits>>
 }
 
@@ -24,18 +20,17 @@ impl ActionObject {
         let ret = ActionObject{
             def : pa,
             name : n.to_string(),
-            owner: RefCell::new(Weak::new()),
             handler : h
         };
 
-        *ret.owner.borrow_mut() = Arc::downgrade(&o);
+       
 
         ret
     }
     ///1
-    pub fn handle(&mut self) {
-        let zz :&mut ActionObject = self;
-        zz.handler.handle(&mut zz.owner);
+    pub fn handle(&self, to : &ThingObject) {
+        let zz :&ActionObject = self;
+        zz.handler.handle(&to);
     }
 
     ///1
@@ -47,5 +42,5 @@ impl ActionObject {
 ///1
 pub trait ActionHandlerTraits {
     ///1
-    fn handle(&self, a: &mut  RefCell<Weak<RwLock<ThingObject>>>);
+    fn handle(&self, a: &ThingObject );
 }

@@ -19,7 +19,7 @@ use uuid::Uuid;
 #[cfg(feature = "ssl")]
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use std::marker::{Send, Sync};
-use std::sync::{Arc , RwLock,Weak};
+use std::sync::{Arc , RwLock,RwLockWriteGuard};
 use std::task::{Context, Poll};
 use std::clone::Clone;
 use std::collections::BTreeMap;
@@ -373,18 +373,20 @@ fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, meth
     }
 
 
-    let      w_thing_obj = &mut s_thing_obj.unwrap();
-    let mut  thing_obj = w_thing_obj.write().unwrap();
+    let      w_thing_obj = &s_thing_obj.unwrap();
+    let      r_thing_obj =  w_thing_obj.read().unwrap();
+
+    let     thing_obj : &ThingObject = &r_thing_obj;
 
     //go into forms
     
-    let  s_po : Option<&mut ActionObject> =  thing_obj.get_action_mut(obj_name);
+    let  s_po : Option<& ActionObject> =  thing_obj.get_action(obj_name);
     
     if s_po.is_none() {
         return HttpResponse::NotFound().finish();
     }
 
-    let mut po = s_po.unwrap();
+    let po = s_po.unwrap();
 
     let def = po.get_definition();
     //do some access checking
@@ -420,7 +422,7 @@ fn handle_action(req: HttpRequest, state: web::Data<Arc<RwLock<AppState>>>, meth
     }
 
     //try to do something
-    po.handle();
+    po.handle(&r_thing_obj);
 
     HttpResponse::Ok().finish()
 
@@ -448,7 +450,7 @@ async fn handle_ws_thing(
 
     let app : &mut AppState = &mut state.as_ref().write().unwrap();
     let u = req.path();
-
+    
 
 
     if app.registered_evts.contains_key(u) == false {
@@ -456,7 +458,7 @@ async fn handle_ws_thing(
     }
 
     
-    let r  = app.registered_acts.get(u);
+    let r  = app.registered_evts.get(u);
     if r.is_none() {
         return Ok(HttpResponse::NotFound().finish());
     }
@@ -890,17 +892,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ThingWebSocket {
 
                     if type_str == "subscribeevent" {
                         let app_state : &mut AppState = &mut self.app_state.write().unwrap();
-                        let a_thing : Arc<RwLock<ThingObject>>   = match app_state.things.get_mut(&self.thing_name) {
-                            None => return ,
-                            Some(x) =>  x.clone()
-                        };
+                        let dezire = app_state.things.get_mut(&self.thing_name);
+                        
+                        let a_thing : Arc<RwLock<ThingObject>>  ;
+                        if dezire.is_none() {
+                            return;
+                        }
+
+                        a_thing = dezire.unwrap().clone();
                
                         let thing : &mut ThingObject = &mut a_thing.write().unwrap();
 
-                        let event : &mut EventObject = match thing.get_event_mut(&self.object_name) {
-                            None => return,
-                            Some(x) => x
-                        };
+                        let o_event = thing.get_event_mut(&self.object_name);
+                        if o_event.is_none() {
+                            return;
+                        }
+
+                        let event : &mut EventObject = o_event.unwrap();
 
                         event.add_subscriber(&self.id);
 

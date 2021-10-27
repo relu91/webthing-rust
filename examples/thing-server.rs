@@ -29,14 +29,11 @@ struct AnActionHandler {
 }
 
 impl ActionHandlerTraits for AnActionHandler {
-    fn handle(&self, a: &mut  RefCell<Weak<RwLock<ThingObject>>>) {
+    fn handle(&self, to: &ThingObject) {
         println!("Action Executed !!");
         //invokes event
-        let wr = &mut a.get_mut();
-        let rwl = wr.upgrade().unwrap();
-        let mut to = rwl.write().unwrap();
         
-        let eo : &mut dyn NotifiableObject = to.get_event_mut(&"an_event".to_string()).unwrap();
+        let eo : &dyn NotifiableObject = to.get_event(&"an_event".to_string()).unwrap();
 
         eo.notify_event();
 
